@@ -18,7 +18,7 @@ class CalendarManager:
 
     def save_calendar(self):
         with open(self.file_name, "w") as file:
-            json.dump(self.events, file, default=str)
+            file.write(json.dumps(self.events))
 
     def read_events(self, start_date, end_date):
         start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
