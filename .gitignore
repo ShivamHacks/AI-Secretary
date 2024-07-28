@@ -1,5 +1,6 @@
 .DS_Store
 openai_key.txt
+calendar.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
