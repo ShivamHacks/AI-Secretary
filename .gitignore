@@ -1,6 +1,8 @@
 .DS_Store
 openai_key.txt
+google_creds.json
 calendar.txt
+token.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
