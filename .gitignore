@@ -3,6 +3,8 @@ openai_key.txt
 google_creds.json
 calendar.txt
 token.json
+google_calendar_token.json
+google_calendar_id.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
