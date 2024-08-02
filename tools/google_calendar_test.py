@@ -72,9 +72,13 @@ class TestGoogleCalendar(unittest.TestCase):
 
         result = gc.read_events(start_date_time, end_date_time)
 
+        self.assertTrue(mock_service.events.return_value.list.called)
         self.assertTrue(result["success"])
         self.assertEqual(len(result["events"]), 1)
-        self.assertTrue(mock_service.events.return_value.list.called)
+        event = result["events"][0]
+        self.assertEqual(event["summary"], "Test Event 1")
+        self.assertEqual(event["start"], "2024-08-02 10:00 AM")
+        self.assertEqual(event["end"], "2024-08-02 11:00 AM")
 
 
 if __name__ == "__main__":
