@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 import os.path
+import json
 
-from utils import *
+from .utils import *
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -65,16 +66,17 @@ class GoogleCalendar:
         )
 
     def list_events(
-        self, start_date=None, start_time=None, end_date=None, end_time=None
+        self, start_date_time=None, end_date_time=None
     ):
         start_rfc3339 = None
         end_rfc3339 = None
-        if start_date and start_time:
-            start_rfc3339 = to_rfc3339(start_date, start_time)
-        if end_date and end_time:
-            end_rfc3339 = to_rfc3339(end_date, end_time)
+        if start_date_time:
+            start_rfc3339 = to_rfc3339(start_date_time)
+        if end_date_time:
+            end_rfc3339 = to_rfc3339(end_date_time)
 
         page_token = None
+        events_list = []
         while True:
             events = (
                 self.service.events()
@@ -87,14 +89,24 @@ class GoogleCalendar:
                 .execute()
             )
             for event in events["items"]:
-                print(event["summary"])
+                event_entry = {}
+                if "start" in event and "dateTime" in event["start"]:
+                    event_entry["start"] = from_rfc3339(event["start"]["dateTime"])
+                if "end" in event and "dateTime" in event["end"]:
+                    event_entry["end"] = from_rfc3339(event["end"]["dateTime"])
+                if "summary" in event:
+                    event_entry["summary"] = event["summary"]
+                events_list.append(event_entry)
+
             page_token = events.get("nextPageToken")
             if not page_token:
                 break
+        
+        return {"success": True, "events": events_list}
 
-    def create_event(self, start_date, start_time, end_date, end_time, summary):
-        start_rfc3339 = to_rfc3339(start_date, start_time)
-        end_rfc3339 = to_rfc3339(end_date, end_time)
+    def create_event(self, start_date_time, end_date_time, summary):
+        start_rfc3339 = to_rfc3339(start_date_time)
+        end_rfc3339 = to_rfc3339(end_date_time)
 
         event = {
             "summary": summary,
@@ -109,12 +121,88 @@ class GoogleCalendar:
         }
 
         event = self.service.events().insert(calendarId="primary", body=event).execute()
+        return {"success": True}
+
+    def get_tool_metadata(self):
+        return [
+            {
+                "type": "function",
+                "function": {
+                    "name": "calendar_read_events",
+                    "description": "Read events within a date range",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "start_date_time": {
+                                "type": "string",
+                                "description": f"The start date in {DATE_STRING_FMT} format",
+                            },
+                            "end_date_time": {
+                                "type": "string",
+                                "description": f"The end date in {DATE_STRING_FMT} format",
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "calendar_create_event",
+                    "description": "Create a new calendar event",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "summary": {
+                                "type": "string",
+                                "description": "The name or summary of the event",
+                            },
+                            "start_date_time": {
+                                "type": "string",
+                                "description": f"The start date in {DATE_STRING_FMT} format",
+                            },
+                            "end_date_time": {
+                                "type": "string",
+                                "description": f"The end date in {DATE_STRING_FMT} format",
+                            },
+                        },
+                        "required": ["summary", "start_date_time", "end_date_time"],
+                    },
+                },
+            },
+        ]
+
+    def process_function_calls(self, function_calls):
+        results = []
+        for call in function_calls:
+            func_name = call.function.name
+            if func_name.startswith("calendar_"):
+                func_name = func_name.split("calendar_")[1]
+                arguments = json.loads(call.function.arguments)
+                print(arguments)
+
+                if func_name == "read_events":
+                    result = self.list_events(
+                        start_date_time=arguments.get("start_date_time"),
+                        end_date_time=arguments.get("end_date_time"),
+                    )
+                elif func_name == "create_event":
+                    result = self.create_event(
+                        start_date_time=arguments.get("start_date_time"),
+                        end_date_time=arguments.get("end_date_time"),
+                        summary=arguments["summary"],
+                    )
+                else:
+                    result = None
+
+                results.append({"tool_call_id": call.id, "output": str(result)})
+        return results
 
 
 if __name__ == "__main__":
     cal = GoogleCalendar()
     cal.authenticate()
     # cal.get_or_create_calendar()
-    #cal.list_events("2024-07-20", "12:00", "2024-07-30", "12:00")
+    cal.list_events("2024-07-20 12:00 AM", "2024-07-30 12:00 PM")
     # print(to_rfc3339("2024-07-20", "12:00"))
-    cal.create_event("2024-08-02", "12:00", "2024-08-02", "14:00", "test event")
+    #cal.create_event("2024-08-02", "12:00", "2024-08-02", "14:00", "test event")

@@ -1,8 +1,9 @@
 from datetime import datetime
 import pytz
 
+DATE_STRING_FMT = "%Y-%m-%d %I:%M %p"
 
-def to_rfc3339(date_str, time_str, timezone_str="America/Los_Angeles"):
+def to_rfc3339(date_time_str, timezone_str="America/Los_Angeles"):
     """
     Convert date and time strings to an RFC3339 formatted string in UTC.
 
@@ -14,9 +15,26 @@ def to_rfc3339(date_str, time_str, timezone_str="America/Los_Angeles"):
     Returns:
     str: The RFC3339 formatted string in UTC.
     """
-    date_time_str = f"{date_str} {time_str}"
-    naive_date_time = datetime.strptime(date_time_str, "%Y-%m-%d %H:%M")
+    naive_date_time = datetime.strptime(date_time_str, DATE_STRING_FMT)
     local_tz = pytz.timezone(timezone_str)
     local_date_time = local_tz.localize(naive_date_time)
     utc_date_time = local_date_time.astimezone(pytz.UTC)
     return utc_date_time.isoformat()
+
+
+def from_rfc3339(rfc3339_str, timezone_str="America/Los_Angeles"):
+    """
+    Convert an RFC3339 formatted string in UTC to a human-readable date and time string.
+
+    Parameters:
+    rfc3339_str (str): RFC3339 formatted string in UTC.
+    timezone_str (str): Timezone string, e.g., 'America/Los_Angeles'.
+
+    Returns:
+    str: The date and time string in the format '%Y-%m-%d %H:%M' in the specified timezone.
+    """
+    utc_date_time = datetime.fromisoformat(rfc3339_str.replace("Z", "+00:00"))
+    local_tz = pytz.timezone(timezone_str)
+    local_date_time = utc_date_time.astimezone(local_tz)
+    date_time_str = local_date_time.strftime(DATE_STRING_FMT)
+    return date_time_str

@@ -1,7 +1,9 @@
 from openai import OpenAI
 from typing_extensions import override
 from openai import AssistantEventHandler
-from tools.calendar_manager import CalendarManager
+# from tools.calendar_manager import CalendarManager
+from tools.utils import *
+from tools.google_calendar import GoogleCalendar
 from datetime import datetime
 
 client = OpenAI(api_key=open("openai_key.txt", "r").read())
@@ -11,7 +13,8 @@ You are an AI secretary and life coach. You help your user organize their
 calendar and ensure they are reaching their goals.
 """
 
-calendar_manager = CalendarManager()
+calendar_manager = GoogleCalendar()
+calendar_manager.authenticate()
 
 assistant = client.beta.assistants.create(
     name="AI Secretary",
@@ -73,7 +76,8 @@ while True:
     )
 
     # Inject current time
-    now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+    now = datetime.now().strftime(DATE_STRING_FMT)
+    print(now)
 
     with client.beta.threads.runs.stream(
         thread_id=thread.id,
