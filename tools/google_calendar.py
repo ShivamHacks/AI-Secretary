@@ -120,15 +120,15 @@ class GoogleCalendar:
             },
         }
 
-        if input(
+        prompt = (
             f"Create event? {summary} from {start_date_time} to {end_date_time} [Y/n]: "
-        ) not in ["Y", ""]:
+        )
+        if input(prompt) not in ["Y", ""]:
             return utils.DEFAULT_USER_REJECTED_ACTION_MSG
-        else:
-            event = (
-                self.service.events().insert(calendarId="primary", body=event).execute()
-            )
-            return {"success": True}
+
+        # TODO: catch error when doing this. Maybe an HTTP error?
+        event = self.service.events().insert(calendarId="primary", body=event).execute()
+        return {"success": True}
 
     def update_event(
         self,
@@ -165,13 +165,29 @@ class GoogleCalendar:
 
         if input(prompt) not in ["Y", ""]:
             return utils.DEFAULT_USER_REJECTED_ACTION_MSG
-        else:
-            updated_event = (
-                self.service.events()
-                .update(calendarId="primary", eventId=event["id"], body=event)
-                .execute()
-            )
-            return {"success": True}
+
+        updated_event = (
+            self.service.events()
+            .update(calendarId="primary", eventId=event["id"], body=event)
+            .execute()
+        )
+        return {"success": True}
+
+    def delete_event(self, event_id):
+        event = (
+            self.service.events().get(calendarId="primary", eventId=event_id).execute()
+        )
+        prompt = (
+            f"Delete event? Summary: {event.get('summary', 'No Summary')}"
+            f" Start: {utils.from_rfc3339(event['start']['dateTime'])}"
+            f" End: {utils.from_rfc3339(event['end']['dateTime'])}"
+            f" [Y/n]: "
+        )
+        if input(prompt) not in ["Y", ""]:
+            return utils.DEFAULT_USER_REJECTED_ACTION_MSG
+
+        self.service.events().delete(calendarId="primary", eventId=event_id).execute()
+        return {"success": True}
 
     def get_tool_metadata(self):
         return [
@@ -248,6 +264,23 @@ class GoogleCalendar:
                                 "type": "string",
                                 "description": utils.END_DATE_PARAM_DESC,
                                 "default": None,
+                            },
+                        },
+                        "required": ["event_id"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "calendar_delete_event",
+                    "description": "Delete an existing calendar event",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "event_id": {
+                                "type": "string",
+                                "description": "The unique ID of the event to delete",
                             },
                         },
                         "required": ["event_id"],
