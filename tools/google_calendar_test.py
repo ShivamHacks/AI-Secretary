@@ -1,0 +1,81 @@
+import unittest
+from unittest.mock import patch, MagicMock
+from utils import *
+from google_calendar import GoogleCalendar
+
+
+class TestGoogleCalendar(unittest.TestCase):
+
+    @patch("googleapiclient.discovery.build")
+    def test_create_event(self, mock_build):
+        mock_service = MagicMock()
+        mock_build.return_value = mock_service
+        gc = GoogleCalendar()
+        gc.service = mock_service
+
+        start_date_time = "2024-08-02 12:00 PM"
+        end_date_time = "2024-08-02 2:00 PM"
+        summary = "test event"
+
+        result = gc.create_event(start_date_time, end_date_time, summary)
+
+        self.assertTrue(result["success"])
+        # TODO: verify the value of the event
+        self.assertTrue(mock_service.events.return_value.insert.called)
+
+    @patch("googleapiclient.discovery.build")
+    def test_update_event(self, mock_build):
+        mock_service = MagicMock()
+        mock_build.return_value = mock_service
+        gc = GoogleCalendar()
+        gc.service = mock_service
+
+        event_id = "test_event_id"
+        new_summary = "Updated Summary"
+        new_start_date_time = "2024-08-02 3:00 PM"
+        new_end_date_time = "2024-08-02 4:00 PM"
+
+        mock_service.events.return_value.get.return_value.execute.return_value = {
+            "id": event_id,
+            "summary": "Old Summary",
+            "start": {"dateTime": "2024-08-02T12:00:00-07:00"},
+            "end": {"dateTime": "2024-08-02T14:00:00-07:00"},
+        }
+
+        result = gc.update_event(
+            event_id, new_summary, new_start_date_time, new_end_date_time
+        )
+
+        self.assertTrue(result["success"])
+        self.assertTrue(mock_service.events.return_value.update.called)
+
+    @patch("googleapiclient.discovery.build")
+    def test_read_events(self, mock_build):
+        mock_service = MagicMock()
+        mock_build.return_value = mock_service
+        gc = GoogleCalendar()
+        gc.service = mock_service
+
+        start_date_time = "2024-08-02 12:00 AM"
+        end_date_time = "2024-08-02 11:59 PM"
+
+        mock_service.events.return_value.list.return_value.execute.return_value = {
+            "items": [
+                {
+                    "id": "test_event_1",
+                    "summary": "Test Event 1",
+                    "start": {"dateTime": "2024-08-02T10:00:00-07:00"},
+                    "end": {"dateTime": "2024-08-02T11:00:00-07:00"},
+                }
+            ]
+        }
+
+        result = gc.read_events(start_date_time, end_date_time)
+
+        self.assertTrue(result["success"])
+        self.assertEqual(len(result["events"]), 1)
+        self.assertTrue(mock_service.events.return_value.list.called)
+
+
+if __name__ == "__main__":
+    unittest.main()

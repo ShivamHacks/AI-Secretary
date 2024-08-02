@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import os.path
 import json
 
-from .utils import *
+from utils import *
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
