@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch, mock_open
 import json
 from types import SimpleNamespace
-from calendar_manager import CalendarManager
+from offline_calendar import CalendarManager
 
 
 class TestCalendarManager(unittest.TestCase):

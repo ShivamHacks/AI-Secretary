@@ -4,6 +4,11 @@ import pytz
 DATE_STRING_FMT = "%Y-%m-%d %I:%M %p"
 START_DATE_PARAM_DESC = f"The start date and time in {DATE_STRING_FMT} format"
 END_DATE_PARAM_DESC = f"The end date and time in {DATE_STRING_FMT} format"
+DEFAULT_USER_REJECTED_ACTION_MSG = {
+    "success": False,
+    "reason": "User rejected calendar action",
+}
+
 
 def to_rfc3339(date_time_str, timezone_str="America/Los_Angeles"):
     """

@@ -1,13 +1,14 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from utils import *
-from google_calendar import GoogleCalendar
+from .google_calendar import GoogleCalendar
+from . import utils
 
 
 class TestGoogleCalendar(unittest.TestCase):
 
     @patch("googleapiclient.discovery.build")
-    def test_create_event(self, mock_build):
+    @patch("builtins.input", return_value="Y")
+    def test_create_event_user_confirmed(self, mock_input, mock_build):
         mock_service = MagicMock()
         mock_build.return_value = mock_service
         gc = GoogleCalendar()
@@ -24,7 +25,25 @@ class TestGoogleCalendar(unittest.TestCase):
         self.assertTrue(mock_service.events.return_value.insert.called)
 
     @patch("googleapiclient.discovery.build")
-    def test_update_event(self, mock_build):
+    @patch("builtins.input", return_value="n")
+    def test_create_event_rejected(self, mock_input, mock_build):
+        mock_service = MagicMock()
+        mock_build.return_value = mock_service
+        gc = GoogleCalendar()
+        gc.service = mock_service
+
+        start_date_time = "2024-08-02 12:00 PM"
+        end_date_time = "2024-08-02 2:00 PM"
+        summary = "test event"
+
+        result = gc.create_event(start_date_time, end_date_time, summary)
+
+        self.assertEqual(result, utils.DEFAULT_USER_REJECTED_ACTION_MSG)
+        self.assertFalse(mock_service.events.return_value.insert.called)
+
+    @patch("googleapiclient.discovery.build")
+    @patch("builtins.input", return_value="Y")
+    def test_update_event_user_confirmed(self, mock_input, mock_build):
         mock_service = MagicMock()
         mock_build.return_value = mock_service
         gc = GoogleCalendar()
@@ -48,6 +67,33 @@ class TestGoogleCalendar(unittest.TestCase):
 
         self.assertTrue(result["success"])
         self.assertTrue(mock_service.events.return_value.update.called)
+
+    @patch("googleapiclient.discovery.build")
+    @patch("builtins.input", return_value="n")
+    def test_update_event_rejected(self, mock_input, mock_build):
+        mock_service = MagicMock()
+        mock_build.return_value = mock_service
+        gc = GoogleCalendar()
+        gc.service = mock_service
+
+        event_id = "test_event_id"
+        new_summary = "Updated Summary"
+        new_start_date_time = "2024-08-02 3:00 PM"
+        new_end_date_time = "2024-08-02 4:00 PM"
+
+        mock_service.events.return_value.get.return_value.execute.return_value = {
+            "id": event_id,
+            "summary": "Old Summary",
+            "start": {"dateTime": "2024-08-02T12:00:00-07:00"},
+            "end": {"dateTime": "2024-08-02T14:00:00-07:00"},
+        }
+
+        result = gc.update_event(
+            event_id, new_summary, new_start_date_time, new_end_date_time
+        )
+
+        self.assertEqual(result, utils.DEFAULT_USER_REJECTED_ACTION_MSG)
+        self.assertFalse(mock_service.events.return_value.update.called)
 
     @patch("googleapiclient.discovery.build")
     def test_read_events(self, mock_build):

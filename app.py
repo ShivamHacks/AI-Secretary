@@ -1,8 +1,7 @@
 from openai import OpenAI
 from typing_extensions import override
 from openai import AssistantEventHandler
-# from tools.calendar_manager import CalendarManager
-from tools.utils import *
+from tools import utils
 from tools.google_calendar import GoogleCalendar
 from datetime import datetime
 
@@ -76,7 +75,7 @@ while True:
     )
 
     # Inject current time
-    now = datetime.now().strftime(DATE_STRING_FMT)
+    now = datetime.now().strftime(utils.DATE_STRING_FMT)
 
     with client.beta.threads.runs.stream(
         thread_id=thread.id,

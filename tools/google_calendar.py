@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import os.path
 import json
 
-from utils import *
+from . import utils
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -69,9 +69,9 @@ class GoogleCalendar:
         start_rfc3339 = None
         end_rfc3339 = None
         if start_date_time:
-            start_rfc3339 = to_rfc3339(start_date_time)
+            start_rfc3339 = utils.to_rfc3339(start_date_time)
         if end_date_time:
-            end_rfc3339 = to_rfc3339(end_date_time)
+            end_rfc3339 = utils.to_rfc3339(end_date_time)
 
         page_token = None
         events_list = []
@@ -89,9 +89,11 @@ class GoogleCalendar:
             for event in events["items"]:
                 event_entry = {"id": event["id"]}
                 if "start" in event and "dateTime" in event["start"]:
-                    event_entry["start"] = from_rfc3339(event["start"]["dateTime"])
+                    event_entry["start"] = utils.from_rfc3339(
+                        event["start"]["dateTime"]
+                    )
                 if "end" in event and "dateTime" in event["end"]:
-                    event_entry["end"] = from_rfc3339(event["end"]["dateTime"])
+                    event_entry["end"] = utils.from_rfc3339(event["end"]["dateTime"])
                 if "summary" in event:
                     event_entry["summary"] = event["summary"]
                 events_list.append(event_entry)
@@ -103,8 +105,8 @@ class GoogleCalendar:
         return {"success": True, "events": events_list}
 
     def create_event(self, start_date_time, end_date_time, summary):
-        start_rfc3339 = to_rfc3339(start_date_time)
-        end_rfc3339 = to_rfc3339(end_date_time)
+        start_rfc3339 = utils.to_rfc3339(start_date_time)
+        end_rfc3339 = utils.to_rfc3339(end_date_time)
 
         event = {
             "summary": summary,
@@ -118,8 +120,15 @@ class GoogleCalendar:
             },
         }
 
-        event = self.service.events().insert(calendarId="primary", body=event).execute()
-        return {"success": True}
+        if input(
+            f"Create event? {summary} from {start_date_time} to {end_date_time} [Y/n]: "
+        ) not in ["Y", ""]:
+            return utils.DEFAULT_USER_REJECTED_ACTION_MSG
+        else:
+            event = (
+                self.service.events().insert(calendarId="primary", body=event).execute()
+            )
+            return {"success": True}
 
     def update_event(
         self,
@@ -132,25 +141,37 @@ class GoogleCalendar:
             self.service.events().get(calendarId="primary", eventId=event_id).execute()
         )
 
+        old_summary = event["summary"]
         if new_summary:
             event["summary"] = new_summary
         if new_start_date_time:
             event["start"] = {
-                "dateTime": to_rfc3339(new_start_date_time),
+                "dateTime": utils.to_rfc3339(new_start_date_time),
                 "timeZone": "America/Los_Angeles",
             }
         if new_end_date_time:
             event["end"] = {
-                "dateTime": to_rfc3339(new_end_date_time),
+                "dateTime": utils.to_rfc3339(new_end_date_time),
                 "timeZone": "America/Los_Angeles",
             }
 
-        updated_event = (
-            self.service.events()
-            .update(calendarId="primary", eventId=event["id"], body=event)
-            .execute()
+        prompt = (
+            f"Update event?"
+            f"{' New Summary: ' + new_summary if new_summary else ' Summary: ' + old_summary}"
+            f"{' New Start Time: ' + new_start_date_time if new_start_date_time else ''}"
+            f"{' New End Time: ' + new_end_date_time if new_end_date_time else ''}"
+            " [Y/n]: "
         )
-        return {"success": True}
+
+        if input(prompt) not in ["Y", ""]:
+            return utils.DEFAULT_USER_REJECTED_ACTION_MSG
+        else:
+            updated_event = (
+                self.service.events()
+                .update(calendarId="primary", eventId=event["id"], body=event)
+                .execute()
+            )
+            return {"success": True}
 
     def get_tool_metadata(self):
         return [
@@ -164,12 +185,12 @@ class GoogleCalendar:
                         "properties": {
                             "start_date_time": {
                                 "type": "string",
-                                "description": START_DATE_PARAM_DESC,
+                                "description": utils.START_DATE_PARAM_DESC,
                                 "default": None,
                             },
                             "end_date_time": {
                                 "type": "string",
-                                "description": END_DATE_PARAM_DESC,
+                                "description": utils.END_DATE_PARAM_DESC,
                                 "default": None,
                             },
                         },
@@ -190,11 +211,11 @@ class GoogleCalendar:
                             },
                             "start_date_time": {
                                 "type": "string",
-                                "description": START_DATE_PARAM_DESC,
+                                "description": utils.START_DATE_PARAM_DESC,
                             },
                             "end_date_time": {
                                 "type": "string",
-                                "description": END_DATE_PARAM_DESC,
+                                "description": utils.END_DATE_PARAM_DESC,
                             },
                         },
                         "required": ["summary", "start_date_time", "end_date_time"],
@@ -220,12 +241,12 @@ class GoogleCalendar:
                             },
                             "new_start_date_time": {
                                 "type": "string",
-                                "description": START_DATE_PARAM_DESC,
+                                "description": utils.START_DATE_PARAM_DESC,
                                 "default": None,
                             },
                             "new_end_date_time": {
                                 "type": "string",
-                                "description": END_DATE_PARAM_DESC,
+                                "description": utils.END_DATE_PARAM_DESC,
                                 "default": None,
                             },
                         },
@@ -238,7 +259,6 @@ class GoogleCalendar:
     def process_function_calls(self, function_calls):
         results = []
         for call in function_calls:
-            print(call)
             func_name = call.function.name
             if func_name.startswith("calendar_"):
                 method_name = func_name.split("calendar_")[1]
@@ -257,7 +277,6 @@ class GoogleCalendar:
 if __name__ == "__main__":
     cal = GoogleCalendar()
     cal.authenticate()
-    # cal.get_or_create_calendar()
     cal.list_events("2024-07-20 12:00 AM", "2024-07-30 12:00 PM")
-    # print(to_rfc3339("2024-07-20", "12:00"))
-    # cal.create_event("2024-08-02", "12:00", "2024-08-02", "14:00", "test event")
+    event = cal.create_event("2024-08-02", "12:00", "2024-08-02", "14:00", "test event")
+    updated_event = cal.update_event(event.id, new_summary="updated summary")
