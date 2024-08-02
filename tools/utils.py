@@ -2,6 +2,8 @@ from datetime import datetime
 import pytz
 
 DATE_STRING_FMT = "%Y-%m-%d %I:%M %p"
+START_DATE_PARAM_DESC = f"The start date and time in {DATE_STRING_FMT} format"
+END_DATE_PARAM_DESC = f"The end date and time in {DATE_STRING_FMT} format"
 
 def to_rfc3339(date_time_str, timezone_str="America/Los_Angeles"):
     """

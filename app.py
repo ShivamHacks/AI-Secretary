@@ -77,7 +77,6 @@ while True:
 
     # Inject current time
     now = datetime.now().strftime(DATE_STRING_FMT)
-    print(now)
 
     with client.beta.threads.runs.stream(
         thread_id=thread.id,
