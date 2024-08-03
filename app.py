@@ -36,19 +36,14 @@ class EventHandler(AssistantEventHandler):
 
     @override
     def on_event(self, event):
-        # Retrieve events that are denoted with 'requires_action'
-        # since these will have our tool_calls
         if event.event == "thread.run.requires_action":
-            run_id = event.data.id  # Retrieve the run ID from the event data
-            self.handle_requires_action(event.data, run_id)
+            self.handle_requires_action(event.data)
 
-    def handle_requires_action(self, data, run_id):
+    def handle_requires_action(self, data):
         tool_outputs = calendar_manager.process_function_calls(data.required_action.submit_tool_outputs.tool_calls)
-        # Submit all tool_outputs at the same time
-        self.submit_tool_outputs(tool_outputs, run_id)
+        self.submit_tool_outputs(tool_outputs)
 
-    def submit_tool_outputs(self, tool_outputs, run_id):
-        # Use the submit_tool_outputs_stream helper
+    def submit_tool_outputs(self, tool_outputs):
         with client.beta.threads.runs.submit_tool_outputs_stream(
             thread_id=self.current_run.thread_id,
             run_id=self.current_run.id,
