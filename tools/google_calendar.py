@@ -76,31 +76,37 @@ class GoogleCalendar:
         page_token = None
         events_list = []
         while True:
-            events = (
-                self.service.events()
-                .list(
-                    calendarId="primary",
-                    timeMin=start_rfc3339,
-                    timeMax=end_rfc3339,
-                    pageToken=page_token,
-                )
-                .execute()
-            )
-            for event in events["items"]:
-                event_entry = {"id": event["id"]}
-                if "start" in event and "dateTime" in event["start"]:
-                    event_entry["start"] = utils.from_rfc3339(
-                        event["start"]["dateTime"]
+            try:
+                events = (
+                    self.service.events()
+                    .list(
+                        calendarId="primary",
+                        timeMin=start_rfc3339,
+                        timeMax=end_rfc3339,
+                        pageToken=page_token,
                     )
-                if "end" in event and "dateTime" in event["end"]:
-                    event_entry["end"] = utils.from_rfc3339(event["end"]["dateTime"])
-                if "summary" in event:
-                    event_entry["summary"] = event["summary"]
-                events_list.append(event_entry)
+                    .execute()
+                )
+                for event in events["items"]:
+                    event_entry = {"id": event["id"]}
+                    if "start" in event and "dateTime" in event["start"]:
+                        event_entry["start"] = utils.from_rfc3339(
+                            event["start"]["dateTime"]
+                        )
+                    if "end" in event and "dateTime" in event["end"]:
+                        event_entry["end"] = utils.from_rfc3339(
+                            event["end"]["dateTime"]
+                        )
+                    if "summary" in event:
+                        event_entry["summary"] = event["summary"]
+                    events_list.append(event_entry)
 
-            page_token = events.get("nextPageToken")
-            if not page_token:
-                break
+                page_token = events.get("nextPageToken")
+                if not page_token:
+                    break
+
+            except HttpError as error:
+                return {"success": False, "error": error}
 
         return {"success": True, "events": events_list}
 
@@ -126,8 +132,13 @@ class GoogleCalendar:
         if input(prompt) not in ["Y", ""]:
             return utils.DEFAULT_USER_REJECTED_ACTION_MSG
 
-        # TODO: catch error when doing this. Maybe an HTTP error?
-        event = self.service.events().insert(calendarId="primary", body=event).execute()
+        try:
+            event = (
+                self.service.events().insert(calendarId="primary", body=event).execute()
+            )
+        except HttpError as error:
+            return {"success": False, "error": error}
+
         return {"success": True}
 
     def update_event(
@@ -166,11 +177,15 @@ class GoogleCalendar:
         if input(prompt) not in ["Y", ""]:
             return utils.DEFAULT_USER_REJECTED_ACTION_MSG
 
-        updated_event = (
-            self.service.events()
-            .update(calendarId="primary", eventId=event["id"], body=event)
-            .execute()
-        )
+        try:
+            updated_event = (
+                self.service.events()
+                .update(calendarId="primary", eventId=event["id"], body=event)
+                .execute()
+            )
+        except HttpError as error:
+            return {"success": False, "error": error}
+
         return {"success": True}
 
     def delete_event(self, event_id):

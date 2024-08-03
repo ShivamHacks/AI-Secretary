@@ -27,7 +27,13 @@ HISTORY_FILE = "conversation_history.json"
 try:
     with open(HISTORY_FILE, "r") as f:
         history = json.load(f)
-        thread = client.beta.threads.create(messages=history)
+        # Adding messages in the history seems to be limited to 32 messages
+        # thread = client.beta.threads.create(messages=history)
+        thread = client.beta.threads.create()
+        for message in history:
+            message = client.beta.threads.messages.create(
+                thread_id=thread.id, role=message["role"], content=message["content"]
+            )
 except FileNotFoundError:
     thread = client.beta.threads.create()
     history = []
@@ -103,3 +109,5 @@ while True:
         event_handler=EventHandler(),
     ) as stream:
         stream.until_done()
+
+    save_history()
