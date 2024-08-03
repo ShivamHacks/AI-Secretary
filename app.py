@@ -30,10 +30,13 @@ try:
         # Adding messages in the history seems to be limited to 32 messages
         # thread = client.beta.threads.create(messages=history)
         thread = client.beta.threads.create()
+        print("Restoring message history", end="", flush=True)
         for message in history:
+            print(".", end="", flush=True)
             message = client.beta.threads.messages.create(
                 thread_id=thread.id, role=message["role"], content=message["content"]
             )
+        print()
 except FileNotFoundError:
     thread = client.beta.threads.create()
     history = []
