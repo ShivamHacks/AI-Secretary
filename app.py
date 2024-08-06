@@ -16,27 +16,43 @@ calendar and ensure they are reaching their goals.
 calendar_manager = GoogleCalendar()
 calendar_manager.authenticate()
 
+print("Adding events vector store")
+events = calendar_manager.read_events()["events"]
+with open("events.json", "w") as f:
+    json.dump(events, f, indent=4)
+vector_store = client.beta.vector_stores.create(name="Events")
+file_batch = client.beta.vector_stores.file_batches.upload_and_poll(
+    vector_store_id=vector_store.id, files=[open("events.json", "rb")]
+)
+
+tools = calendar_manager.get_tool_metadata()
+tools.append({"type": "file_search"})
+
 assistant = client.beta.assistants.create(
     name="AI Secretary",
     instructions=instructions,
     model="gpt-4o",
-    tools=calendar_manager.get_tool_metadata(),
+    tools=tools,
+    tool_resources={"file_search": {"vector_store_ids": [vector_store.id]}},
 )
 
 HISTORY_FILE = "conversation_history.json"
+LOAD_HISTORY=False
 try:
     with open(HISTORY_FILE, "r") as f:
         history = json.load(f)
         # Adding messages in the history seems to be limited to 32 messages
         # thread = client.beta.threads.create(messages=history)
         thread = client.beta.threads.create()
-        print("Restoring message history", end="", flush=True)
-        for message in history:
-            print(".", end="", flush=True)
-            message = client.beta.threads.messages.create(
-                thread_id=thread.id, role=message["role"], content=message["content"]
-            )
-        print()
+        if LOAD_HISTORY:
+            print("Restoring message history", end="", flush=True)
+            for message in history:
+                print(".", end="", flush=True)
+                message = client.beta.threads.messages.create(
+                    thread_id=thread.id, role=message["role"], content=message["content"]
+                )
+            print()
+
 except FileNotFoundError:
     thread = client.beta.threads.create()
     history = []
@@ -55,6 +71,10 @@ class EventHandler(AssistantEventHandler):
     def on_text_done(self, text):
         history.append({"role": "assistant", "content": text.value})
         print()
+
+    @override
+    def on_tool_call_created(self, tool_call):
+        print(f"\nassistant > tool call: {tool_call.type}\n", flush=True)
 
     @override
     def on_event(self, event):

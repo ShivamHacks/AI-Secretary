@@ -6,6 +6,7 @@ token.json
 google_calendar_token.json
 google_calendar_id.txt
 conversation_history.json
+events.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

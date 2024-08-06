@@ -325,6 +325,10 @@ class GoogleCalendar:
 if __name__ == "__main__":
     cal = GoogleCalendar()
     cal.authenticate()
-    cal.list_events("2024-07-20 12:00 AM", "2024-07-30 12:00 PM")
-    event = cal.create_event("2024-08-02", "12:00", "2024-08-02", "14:00", "test event")
-    updated_event = cal.update_event(event.id, new_summary="updated summary")
+    # cal.list_events("2024-07-20 12:00 AM", "2024-07-30 12:00 PM")
+    # event = cal.create_event("2024-08-02", "12:00", "2024-08-02", "14:00", "test event")
+    # updated_event = cal.update_event(event.id, new_summary="updated summary")
+    events = cal.read_events()["events"]
+    with open("events.json", "w") as f:
+        json.dump(events, f, indent=4)
+    
