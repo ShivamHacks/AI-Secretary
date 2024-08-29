@@ -25,6 +25,7 @@ file_batch = client.beta.vector_stores.file_batches.upload_and_poll(
     vector_store_id=vector_store.id, files=[open("events.json", "rb")]
 )
 
+# TODO: add a general time tool to get the current time and date for multi-day sessions
 tools = calendar_manager.get_tool_metadata()
 tools.append({"type": "file_search"})
 
@@ -37,7 +38,7 @@ assistant = client.beta.assistants.create(
 )
 
 HISTORY_FILE = "conversation_history.json"
-LOAD_HISTORY=False
+LOAD_HISTORY = False
 try:
     with open(HISTORY_FILE, "r") as f:
         history = json.load(f)
@@ -49,7 +50,9 @@ try:
             for message in history:
                 print(".", end="", flush=True)
                 message = client.beta.threads.messages.create(
-                    thread_id=thread.id, role=message["role"], content=message["content"]
+                    thread_id=thread.id,
+                    role=message["role"],
+                    content=message["content"],
                 )
             print()
 

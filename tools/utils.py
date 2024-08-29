@@ -1,4 +1,5 @@
 from datetime import datetime
+import tzlocal
 import pytz
 
 DATE_STRING_FMT = "%Y-%m-%d %I:%M %p"
@@ -10,7 +11,11 @@ DEFAULT_USER_REJECTED_ACTION_MSG = {
 }
 
 
-def to_rfc3339(date_time_str, timezone_str="America/Los_Angeles"):
+def get_local_timezone():
+    return str(tzlocal.get_localzone())
+
+
+def to_rfc3339(date_time_str, timezone_str=get_local_timezone()):
     """
     Convert date and time strings to an RFC3339 formatted string in UTC.
 
@@ -35,7 +40,7 @@ def to_rfc3339(date_time_str, timezone_str="America/Los_Angeles"):
     return utc_date_time.isoformat()
 
 
-def from_rfc3339(rfc3339_str, timezone_str="America/Los_Angeles"):
+def from_rfc3339(rfc3339_str, timezone_str=get_local_timezone()):
     """
     Convert an RFC3339 formatted string in UTC to a human-readable date and time string.
 
