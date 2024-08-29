@@ -22,6 +22,12 @@ def to_rfc3339(date_time_str, timezone_str="America/Los_Angeles"):
     Returns:
     str: The RFC3339 formatted string in UTC.
     """
+    # Check and correct for invalid '00:00 AM' or '00:00 PM' cases
+    if "00:00 AM" in date_time_str:
+        date_time_str = date_time_str.replace("00:00 AM", "12:00 AM")
+    elif "00:00 PM" in date_time_str:
+        date_time_str = date_time_str.replace("00:00 PM", "12:00 PM")
+
     naive_date_time = datetime.strptime(date_time_str, DATE_STRING_FMT)
     local_tz = pytz.timezone(timezone_str)
     local_date_time = local_tz.localize(naive_date_time)
