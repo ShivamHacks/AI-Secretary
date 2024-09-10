@@ -1,0 +1,62 @@
+[
+    {
+        "task": "Buy groceries",
+        "deadline": "2024-09-05",
+        "category": "Shopping"
+    },
+    {
+        "task": "Complete project report",
+        "deadline": "2024-09-10",
+        "category": "Work"
+    },
+    {
+        "task": "Doctor appointment",
+        "deadline": "2024-09-07",
+        "category": "Health"
+    },
+    {
+        "task": "Buy groceries",
+        "deadline": "2024-09-05",
+        "category": "Shopping"
+    },
+    {
+        "task": "Complete project report",
+        "deadline": "2024-09-10",
+        "category": "Work"
+    },
+    {
+        "task": "Doctor appointment",
+        "deadline": "2024-09-07",
+        "category": "Health"
+    },
+    {
+        "task": "Buy groceries",
+        "deadline": "2024-09-05",
+        "category": "Shopping"
+    },
+    {
+        "task": "Complete project report",
+        "deadline": "2024-09-10",
+        "category": "Work"
+    },
+    {
+        "task": "Doctor appointment",
+        "deadline": "2024-09-07",
+        "category": "Health"
+    },
+    {
+        "task": "Buy groceries",
+        "deadline": "2024-09-05",
+        "category": "Shopping"
+    },
+    {
+        "task": "Complete project report",
+        "deadline": "2024-09-10",
+        "category": "Work"
+    },
+    {
+        "task": "Doctor appointment",
+        "deadline": "2024-09-07",
+        "category": "Health"
+    }
+]
