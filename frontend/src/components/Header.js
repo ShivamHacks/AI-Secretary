@@ -3,7 +3,7 @@ import { useDataContext } from "./DataProvider";
 
 const Header = () => {
   const { setUser } = useDataContext();
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState('user1');
 
   const sendMessage = () => {
     setUser(message);

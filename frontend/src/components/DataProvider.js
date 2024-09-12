@@ -4,7 +4,7 @@ const DataContext = createContext();
 
 const SAMPLE_LOCAL_DATA = require('./local_data_example.json');
 const SOCKET_URL = "ws://localhost:8000/ws";
-const USE_LOCAL_DATA = true;
+const USE_LOCAL_DATA = false;
 
 export const DataProvider = ({ children }) => {
   const [data, setData] = useState({ chat: [], events: [], todo: [] });
@@ -60,16 +60,24 @@ export const DataProvider = ({ children }) => {
   }, []);
 
   const setUser = (user) => {
-    console.log(`Switching user from ${currentUser} to: ${user}`);
     if (currentUser !== user) {
-      // Save the current user data before switching
-      setUserData((userData) => {
-        userData[currentUser] = data;
-        return userData;
-      });
-      // Switch the user and load their data
+      console.log(`Switching user from ${currentUser} to: ${user}`);
+      if (USE_LOCAL_DATA) {
+        // Save the current user data before switching
+        setUserData((userData) => {
+          userData[currentUser] = data;
+          return userData;
+        });
+        // Switch the user and load their data
+        setData(multiUserData[user] || SAMPLE_LOCAL_DATA);
+      } else if (socketRef.current && isConnected) {
+        const messagePayload = JSON.stringify({ changeUser: user });
+        console.log("Sending message to server:", messagePayload);
+        socketRef.current.send(messagePayload);
+      } else {
+        console.log("WebSocket is not connected. Couldn't change user.");
+      }
       setCurrentUser(user);
-      setData(multiUserData[user] || { chat: [], events: [], todo: [] });
     }
   };
 
