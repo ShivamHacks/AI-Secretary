@@ -3,32 +3,11 @@ import Calendar from './components/Calendar';
 import Chat from './components/Chat';
 import Database from './components/Database';
 import Todo from './components/Todo';
+import { DataProvider } from "./components/DataProvider";
 
 function App() {
   const database = new Database();
   database.loadSampleData();
-
-  // Example WebSocket connection
-  useEffect(() => {
-    const socket = new WebSocket('ws://localhost:8000/ws');
-
-    // Handle when the WebSocket connection is opened
-    socket.onopen = () => {
-      console.log('Connection established!');
-      socket.send('Hello Server');
-    };
-
-    // Handle messages from the server
-    socket.onmessage = function (event) {
-      console.log('Message from server: ', event.data);
-    };
-
-    // Handle WebSocket closing
-    socket.onclose = () => {
-      console.log('Connection closed');
-    };
-  }, []);
-
 
   return (
     <div style={{
@@ -55,12 +34,14 @@ function App() {
         }}>
           <Calendar database={database} />
         </div>
+        <DataProvider>
         <div style={{
           height: 'calc(50% - 20px)',
           paddingTop: '20px',
         }}>
-          <Todo database={database} />
+          <Todo />
         </div>
+        </DataProvider>
       </div>
     </div>
   );

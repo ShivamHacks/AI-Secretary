@@ -1,8 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useDataContext } from "./DataProvider";
 
-function TodoList({ database }) {
-  const [todos, setTodos] = useState(database.getTodoList());
+function TodoList() {
+  const { data } = useDataContext();
+  const [todos, setTodos] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
+
+  // Function to sort the todos array based on the sort configuration
+  const sortTodos = (todosToSort, config) => {
+    if (config.key === "") return todosToSort; // No sorting applied yet
+
+    const sortedTodos = [...todosToSort].sort((a, b) => {
+      if (a[config.key] < b[config.key]) {
+        return config.direction === "ascending" ? -1 : 1;
+      }
+      if (a[config.key] > b[config.key]) {
+        return config.direction === "ascending" ? 1 : -1;
+      }
+      return 0;
+    });
+
+    return sortedTodos;
+  };
+
+  // Sync the local todos state with the global data and maintain the sorting order
+  useEffect(() => {
+    const sortedData = sortTodos([...data.todo], sortConfig); // Reapply sorting based on sortConfig
+    setTodos(sortedData);
+  }, [data.todo, sortConfig]); // Reapply whenever global data or sortConfig changes
 
   const sortByColumn = (key) => {
     let direction = "ascending";
@@ -10,21 +35,11 @@ function TodoList({ database }) {
       direction = "descending";
     }
 
-    const sortedTodos = [...todos].sort((a, b) => {
-      if (a[key] < b[key]) {
-        return direction === "ascending" ? -1 : 1;
-      }
-      if (a[key] > b[key]) {
-        return direction === "ascending" ? 1 : -1;
-      }
-      return 0;
-    });
-
-    setSortConfig({ key, direction });
-    setTodos(sortedTodos);
+    setSortConfig({ key, direction }); // Update sortConfig, this will trigger re-sorting
   };
 
   const markAsCompleted = (index) => {
+    // Logic to mark task as completed
   };
 
   const getArrow = (column) => {
@@ -35,34 +50,20 @@ function TodoList({ database }) {
   };
 
   return (
-    <div style={{
-      width: '100%',
-      height: '100%',
-    }}>
-      <div style={{
-        height: '100%',
-        overflowY: 'scroll',
-      }}>
-        <table style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          textAlign: 'left',
-        }}>
+    <div style={{ width: '100%', height: '100%' }}>
+      <div style={{ height: '100%', overflowY: 'scroll' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           {/* Sticky header */}
           <thead style={{
             position: 'sticky',
             top: '0',
             zIndex: 1,
             backgroundColor: '#fff',
-            boxShadow: '0 2px 2px -1px rgba(0, 0, 0, 0.1)'
+            boxShadow: '0 2px 2px -1px rgba(0, 0, 0, 0.1)',
           }}>
-            <tr style={{
-              height: '50px',
-            }}>
+            <tr style={{ height: '50px' }}>
               {/* For the checkboxes */}
-              <th style={{
-                width: '5%',
-              }}></th>
+              <th style={{ width: '5%' }}></th>
               <th onClick={() => sortByColumn("task")} style={{ width: '60%', cursor: 'pointer' }}>
                 Task {getArrow("task")}
               </th>
@@ -76,10 +77,7 @@ function TodoList({ database }) {
           </thead>
           <tbody>
             {todos.map((todo, index) => (
-              <tr key={index} style={{
-                height: '50px',
-                backgroundColor: index % 2 === 0 ? '#f9f9f9' : '#fff',
-              }}>
+              <tr key={index} style={{ height: '50px', backgroundColor: index % 2 === 0 ? '#f9f9f9' : '#fff' }}>
                 <td>
                   <input type="checkbox" onChange={() => markAsCompleted(index)} />
                 </td>
@@ -93,6 +91,6 @@ function TodoList({ database }) {
       </div>
     </div>
   );
-};
+}
 
 export default TodoList;
