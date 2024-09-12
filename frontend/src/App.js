@@ -10,40 +10,40 @@ function App() {
   database.loadSampleData();
 
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      padding: '20px',
-      width: 'calc(100vw - 40px)',
-      height: 'calc(100vh - 40px)',
-    }}>
+    <DataProvider>
       <div style={{
-        width: 'calc(40% - 20px)',
-        paddingRight: '20px',
-      }}>
-        <Chat database={database} />
-      </div>
-
-      <div style={{
-        width: '60%',
         display: 'flex',
-        flexDirection: 'column',
+        justifyContent: 'center',
+        padding: '20px',
+        width: 'calc(100vw - 40px)',
+        height: 'calc(100vh - 40px)',
       }}>
         <div style={{
-          height: '50%',
+          width: 'calc(40% - 20px)',
+          paddingRight: '20px',
         }}>
-          <Calendar database={database} />
+          <Chat />
         </div>
-        <DataProvider>
+
         <div style={{
-          height: 'calc(50% - 20px)',
-          paddingTop: '20px',
+          width: '60%',
+          display: 'flex',
+          flexDirection: 'column',
         }}>
-          <Todo />
+          <div style={{
+            height: '50%',
+          }}>
+            <Calendar />
+          </div>
+          <div style={{
+            height: 'calc(50% - 20px)',
+            paddingTop: '20px',
+          }}>
+            <Todo />
+          </div>
         </div>
-        </DataProvider>
-      </div>
-    </div>
+      </div >
+    </DataProvider>
   );
 }
 

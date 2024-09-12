@@ -25,7 +25,7 @@
             "content": "Noted! I'll help you plan the weekend hackathon for the AI secretary app."
         }
     ],
-    "calendar": [
+    "events": [
         {
             "title": "Meeting with Dipesh",
             "start": "2024-09-13T10:00:00",

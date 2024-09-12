@@ -1,20 +1,16 @@
 import React, { useState, useRef } from 'react';
+import { useDataContext } from "./DataProvider";
 
-function Chat({ database }) {
-  const [currentSender, setCurrentSender] = useState("user"); // Track current sender
+function Chat() {
+  const { data, isConnected, addMessage } = useDataContext();
+  console.log(data);
   const [inputMessage, setInputMessage] = useState(""); // Track the input message
   const bottomRef = useRef(null); // Create a ref for the bottom of the chat
 
   const handleSendMessage = () => {
-    if (inputMessage.trim()) {
-      const newMessage = {
-        message: inputMessage,
-        sender: currentSender
-      };
-
-      // Update message list and alternate the sender
-      database.addChatMessage(newMessage);
-      setCurrentSender(prevSender => (prevSender === "user" ? "assistant" : "user"));
+    const newMessage = inputMessage.trim();
+    if (newMessage) {
+      addMessage(newMessage);
       setInputMessage(''); // Clear the input after sending
     }
   };
@@ -42,11 +38,11 @@ function Chat({ database }) {
           overflowY: 'scroll',
         }}
       >
-        {database.getChatMessages().map((msg, index) => (
+        {data.chat.map((msg, index) => (
           <div
             key={index}
             style={{
-              textAlign: msg.sender === 'user' ? 'right' : 'left',
+              textAlign: msg.role === 'user' ? 'right' : 'left',
               marginBottom: '10px'
             }}
           >
@@ -54,14 +50,14 @@ function Chat({ database }) {
               style={{
                 display: 'inline-block',
                 padding: '10px',
-                backgroundColor: msg.sender === 'user' ? '#0084ff' : '#f0f0f0',
-                color: msg.sender === 'user' ? '#fff' : '#000',
+                backgroundColor: msg.role === 'user' ? '#0084ff' : '#f0f0f0',
+                color: msg.role === 'user' ? '#fff' : '#000',
                 borderRadius: '10px',
                 maxWidth: '70%',
                 wordWrap: 'break-word'
               }}
             >
-              {msg.message}
+              {msg.content}
             </span>
           </div>
         ))}

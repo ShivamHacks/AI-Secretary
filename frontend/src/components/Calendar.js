@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useDataContext } from "./DataProvider";
 
 // CSS consts
 const scrollBarWidth = '17px';
@@ -36,7 +37,9 @@ const getTimeSlots = () => {
   return times;
 };
 
-function Calendar({ database }) {
+function Calendar() {
+  const { data } = useDataContext();
+
   // Scroll to 7 AM on component mount
   const scrollContainerRef = useRef(null);
   useEffect(() => {
@@ -158,7 +161,7 @@ function Calendar({ database }) {
                 ))}
 
                 {/* Render Events */}
-                {database.getCalendarEvents()
+                {data.events
                   .filter(event => {
                     const eventStartTime = new Date(event.start);
                     return eventStartTime.toLocaleDateString('en-US', date_format) === day;

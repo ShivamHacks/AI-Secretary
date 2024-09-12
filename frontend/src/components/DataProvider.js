@@ -1,25 +1,31 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-// Create the DataContext
 const DataContext = createContext();
 
-// Sample local data (replace with your local data or import it)
 const SAMPLE_LOCAL_DATA = require('./local_data_example.json');
 const SOCKET_URL = "ws://localhost:8000/ws";
 const USE_LOCAL_DATA = true;
 
-// The DataProvider that wraps your components
 export const DataProvider = ({ children }) => {
   const [data, setData] = useState({ chat: [], events: [], todo: [] });
   const [isConnected, setIsConnected] = useState(false);
 
-  // Function to add a message to the chat
-  const addMessage = (role, content) => {
-    const newMessage = { role, content };
-    setData((prevData) => ({
-      ...prevData,
-      chat: [...prevData.chat, newMessage],
-    }));
+  const addMessage = (message) => {
+    const newMessage = { role: "user", content: message };
+    setData((prevData) => {
+      let updatedChat = [...prevData.chat, newMessage];
+      if (USE_LOCAL_DATA) {
+        updatedChat = [...updatedChat, {
+          role: "assistant",
+          content: `You typed "${message}"`,
+        }];
+      }
+
+      return {
+        ...prevData,
+        chat: updatedChat,
+      };
+    });
   };
 
   useEffect(() => {
