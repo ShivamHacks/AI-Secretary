@@ -3,6 +3,7 @@ import Calendar from './components/Calendar';
 import Chat from './components/Chat';
 import Database from './components/Database';
 import Todo from './components/Todo';
+import Header from './components/Header';
 import { DataProvider } from "./components/DataProvider";
 
 function App() {
@@ -13,36 +14,51 @@ function App() {
     <DataProvider>
       <div style={{
         display: 'flex',
-        justifyContent: 'center',
+        flexDirection: 'column', // Stack header and layout vertically
         padding: '20px',
         width: 'calc(100vw - 40px)',
-        height: 'calc(100vh - 40px)',
+        height: 'calc(100vh - 40px)', // Full available height
       }}>
+        {/* Header Section */}
         <div style={{
-          width: 'calc(40% - 20px)',
-          paddingRight: '20px',
+          height: '5%',
         }}>
-          <Chat />
+          <Header />
         </div>
 
+        {/* Main Layout Section (Chat, Calendar, Todo) */}
         <div style={{
-          width: '60%',
           display: 'flex',
-          flexDirection: 'column',
+          justifyContent: 'center',
+          height: '95%',
         }}>
           <div style={{
-            height: '50%',
+            width: 'calc(40% - 20px)',
+            paddingRight: '20px',
           }}>
-            <Calendar />
+            <Chat />
           </div>
+
           <div style={{
-            height: 'calc(50% - 20px)',
-            paddingTop: '20px',
+            width: '60%',
+            display: 'flex',
+            flexDirection: 'column',
           }}>
-            <Todo />
+            <div style={{
+              height: '50%',
+            }}>
+              <Calendar />
+            </div>
+            <div style={{
+              height: 'calc(50% - 20px)',
+              paddingTop: '20px',
+            }}>
+              <Todo />
+            </div>
           </div>
         </div>
-      </div >
+      </div>
+
     </DataProvider>
   );
 }

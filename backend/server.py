@@ -24,7 +24,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 local_data["chat"].extend(
                     [
                         {"role": "user", "content": new_message},
-                        {"role": "assistant", "content": f"You said {new_message}"},
+                        {"role": "assistant", "content": f"You said \"{new_message}\""},
                     ]
                 )
 

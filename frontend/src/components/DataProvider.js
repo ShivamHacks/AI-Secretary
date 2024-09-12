@@ -4,10 +4,12 @@ const DataContext = createContext();
 
 const SAMPLE_LOCAL_DATA = require('./local_data_example.json');
 const SOCKET_URL = "ws://localhost:8000/ws";
-const USE_LOCAL_DATA = false;
+const USE_LOCAL_DATA = true;
 
 export const DataProvider = ({ children }) => {
   const [data, setData] = useState({ chat: [], events: [], todo: [] });
+  const [multiUserData, setUserData] = useState({});
+  const [currentUser, setCurrentUser] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
 
@@ -57,6 +59,20 @@ export const DataProvider = ({ children }) => {
     }
   }, []);
 
+  const setUser = (user) => {
+    console.log(`Switching user from ${currentUser} to: ${user}`);
+    if (currentUser !== user) {
+      // Save the current user data before switching
+      setUserData((userData) => {
+        userData[currentUser] = data;
+        return userData;
+      });
+      // Switch the user and load their data
+      setCurrentUser(user);
+      setData(multiUserData[user] || { chat: [], events: [], todo: [] });
+    }
+  };
+
   const addMessage = (message) => {
     const newMessage = { role: "user", content: message };
     setData((prevData) => {
@@ -83,7 +99,7 @@ export const DataProvider = ({ children }) => {
 
   // Provide the state and functions to children components
   return (
-    <DataContext.Provider value={{ data, isConnected, addMessage }}>
+    <DataContext.Provider value={{ data, isConnected, addMessage, setUser }}>
       {children}
     </DataContext.Provider>
   );
