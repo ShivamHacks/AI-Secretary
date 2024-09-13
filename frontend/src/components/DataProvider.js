@@ -3,13 +3,13 @@ import React, { createContext, useContext, useState, useEffect, useRef } from "r
 const DataContext = createContext();
 
 const SAMPLE_LOCAL_DATA = require('./local_data_example.json');
-const SOCKET_URL = "ws://localhost:8000/ws";
+const SOCKET_URL = "ws://localhost:8000/ws/";
 const USE_LOCAL_DATA = false;
 
 export const DataProvider = ({ children }) => {
   const [data, setData] = useState({ chat: [], events: [], todo: [] });
   const [multiUserData, setUserData] = useState({});
-  const [currentUser, setCurrentUser] = useState('');
+  const [currentUser, setCurrentUser] = useState('user1');
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
 
@@ -18,7 +18,7 @@ export const DataProvider = ({ children }) => {
       setData(SAMPLE_LOCAL_DATA);
       setIsConnected(false); // No connection, since local data is used
     } else {
-      socketRef.current = new WebSocket(SOCKET_URL);
+      socketRef.current = new WebSocket(SOCKET_URL + currentUser);
 
       socketRef.current.onopen = () => {
         console.log("WebSocket connected");
@@ -54,10 +54,11 @@ export const DataProvider = ({ children }) => {
       };
 
       return () => {
+        console.log("User changed, closing websocket");
         socketRef.current.close();
       };
     }
-  }, []);
+  }, [currentUser]);
 
   const setUser = (user) => {
     if (currentUser !== user) {
@@ -70,12 +71,6 @@ export const DataProvider = ({ children }) => {
         });
         // Switch the user and load their data
         setData(multiUserData[user] || SAMPLE_LOCAL_DATA);
-      } else if (socketRef.current && isConnected) {
-        const messagePayload = JSON.stringify({ changeUser: user });
-        console.log("Sending message to server:", messagePayload);
-        socketRef.current.send(messagePayload);
-      } else {
-        console.log("WebSocket is not connected. Couldn't change user.");
       }
       setCurrentUser(user);
     }

@@ -1,43 +1,57 @@
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
+from typing import Dict
 import json
-import copy
 from chat import Chat
 
 app = FastAPI()
 
-user_data = {
-    "user1": Chat("user1"),
-}
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: Dict[str, WebSocket] = {}
+        self.user_data: Dict[str, Chat] = {}
+
+    async def connect(self, websocket: WebSocket, user_id: str):
+        await websocket.accept()
+        self.active_connections[user_id] = websocket
+        if user_id not in self.user_data:
+            self.user_data[user_id] = Chat(user_id)
+
+    def disconnect(self, user_id: str):
+        self.active_connections.pop(user_id, None)
+
+    async def send_initial_data(self, user_id: str):
+        if user_id in self.active_connections:
+            initial_data = self.user_data[user_id].get_data()
+            await self.active_connections[user_id].send_text(json.dumps(initial_data))
+
+    async def handle_message(self, user_id: str, message: str):
+        if user_id in self.user_data:
+            for response in self.user_data[user_id].stream_message_response(message):
+                await self.active_connections[user_id].send_text(json.dumps(response))
 
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    global user_data
-    current_user = "user1"
-    await websocket.accept()
+manager = ConnectionManager()
 
-    # Send the initial data to the client
-    await websocket.send_text(json.dumps(user_data[current_user].get_data()))
 
-    while True:
-        # Wait for the client to send a message
-        data = await websocket.receive_text()
-        try:
-            received_message = json.loads(data)
-            print(received_message)
-            if "newMessage" in received_message:
-                new_message = received_message["newMessage"]
-                for data in user_data[current_user].stream_message_response(new_message):
-                    await websocket.send_text(json.dumps(data))
+@app.websocket("/ws/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: str):
+    try:
+        await manager.connect(websocket, user_id)
+        await manager.send_initial_data(user_id)
 
-            if "changeUser" in received_message:
-                current_user = received_message["changeUser"]
-                if current_user in user_data:
-                    print(f"Setting user to existing user {current_user}")
-                else:
-                    print(f"Creating new data for {current_user}")
-                    user_data[current_user] = Chat(current_user)
-                await websocket.send_text(json.dumps(user_data[current_user].get_data()))
+        while True:
+            data = await websocket.receive_text()
 
-        except json.JSONDecodeError:
-            await websocket.send_text("Error: Invalid JSON format received.")
+            try:
+                received_message = json.loads(data)
+
+                if "newMessage" in received_message:
+                    new_message = received_message["newMessage"]
+                    await manager.handle_message(user_id, new_message)
+
+            except json.JSONDecodeError:
+                await websocket.send_text("Error: Invalid JSON format received.")
+
+    except WebSocketDisconnect:
+        manager.disconnect(user_id)
