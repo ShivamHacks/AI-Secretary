@@ -1,15 +1,11 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import Calendar from './components/Calendar';
 import Chat from './components/Chat';
-import Database from './components/Database';
 import Todo from './components/Todo';
 import Header from './components/Header';
 import { DataProvider } from "./components/DataProvider";
 
 function App() {
-  const database = new Database();
-  database.loadSampleData();
-
   return (
     <DataProvider>
       <div style={{
