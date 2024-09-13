@@ -27,7 +27,8 @@ async def websocket_endpoint(websocket: WebSocket):
             print(received_message)
             if "newMessage" in received_message:
                 new_message = received_message["newMessage"]
-                user_data[current_user].handle_message(new_message)
+                for data in user_data[current_user].stream_message_response(new_message):
+                    await websocket.send_text(json.dumps(data))
 
             if "changeUser" in received_message:
                 current_user = received_message["changeUser"]
@@ -36,9 +37,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 else:
                     print(f"Creating new data for {current_user}")
                     user_data[current_user] = Chat(current_user)
-
-            # Send the updated data back to the client
-            await websocket.send_text(json.dumps(user_data[current_user].get_data()))
+                await websocket.send_text(json.dumps(user_data[current_user].get_data()))
 
         except json.JSONDecodeError:
             await websocket.send_text("Error: Invalid JSON format received.")

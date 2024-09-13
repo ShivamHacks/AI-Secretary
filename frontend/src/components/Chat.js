@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useDataContext } from "./DataProvider";
 
 function Chat() {
@@ -18,9 +18,13 @@ function Chat() {
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       handleSendMessage(); // Call send message function when Enter is pressed
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" }); // Scroll to the bottom
     }
   };
+
+  // Scroll to the bottom any time the chat changes
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView(); // Scroll to the bottom
+  }, [data.chat]);
 
   return (
     <div style={{
