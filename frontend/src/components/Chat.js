@@ -42,29 +42,33 @@ function Chat() {
           overflowY: 'scroll',
         }}
       >
-        {data.chat.map((msg, index) => (
-          <div
-            key={index}
-            style={{
-              textAlign: msg.role === 'user' ? 'right' : 'left',
-              marginBottom: '10px'
-            }}
-          >
-            <span
+        {data.chat
+          .filter(message => {
+            return message.role == 'user' || message.role == 'assistant';
+          })
+          .map((msg, index) => (
+            <div
+              key={index}
               style={{
-                display: 'inline-block',
-                padding: '10px',
-                backgroundColor: msg.role === 'user' ? '#0084ff' : '#f0f0f0',
-                color: msg.role === 'user' ? '#fff' : '#000',
-                borderRadius: '10px',
-                maxWidth: '70%',
-                wordWrap: 'break-word'
+                textAlign: msg.role === 'user' ? 'right' : 'left',
+                marginBottom: '10px'
               }}
             >
-              {msg.content}
-            </span>
-          </div>
-        ))}
+              <span
+                style={{
+                  display: 'inline-block',
+                  padding: '10px',
+                  backgroundColor: msg.role === 'user' ? '#0084ff' : '#f0f0f0',
+                  color: msg.role === 'user' ? '#fff' : '#000',
+                  borderRadius: '10px',
+                  maxWidth: '70%',
+                  wordWrap: 'break-word'
+                }}
+              >
+                {msg.content}
+              </span>
+            </div>
+          ))}
         <div ref={bottomRef} /> {/* Add this to scroll to the bottom */}
       </div>
       <div style={{

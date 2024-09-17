@@ -326,6 +326,16 @@ class GoogleCalendar:
                         {"tool_call_id": call.id, "output": "Function not found"}
                     )
         return results
+    
+    def process_function_call(self, function_name, args):
+        method_name = function_name.split("calendar_")[1]
+        method = getattr(self, method_name, None)
+        if method:
+            arguments = json.loads(args)
+            result = method(**arguments)
+            return result
+
+        return {"status": "error", "message": "Function not found"}
 
 
 if __name__ == "__main__":
