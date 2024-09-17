@@ -44,7 +44,7 @@ function Chat() {
       >
         {data.chat
           .filter(message => {
-            return message.role == 'user' || message.role == 'assistant';
+            return (message.role === 'user' || message.role === 'assistant') && message.content && message.content.trim() !== '';
           })
           .map((msg, index) => (
             <div

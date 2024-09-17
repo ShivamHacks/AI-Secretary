@@ -331,8 +331,7 @@ class GoogleCalendar:
         method_name = function_name.split("calendar_")[1]
         method = getattr(self, method_name, None)
         if method:
-            arguments = json.loads(args)
-            result = method(**arguments)
+            result = method(**args)
             return result
 
         return {"status": "error", "message": "Function not found"}

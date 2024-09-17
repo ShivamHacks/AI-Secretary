@@ -29,113 +29,114 @@ class Chat:
                 "events": [],
                 "todo": []
             }
-        self.google_calendar = GoogleCalendar()
-        self.google_calendar.authenticate()
+            self.google_calendar = GoogleCalendar()
+            self.google_calendar.authenticate()
+
+    def get_data(self):
+        return self.user_data
 
     def stream_message_response(self, message):
+        # Step 1: Handle user input
+        self._add_user_message(message)
+
+        # Step 2: Fake chat for testing
+        if FAKE_CHAT:
+            self._add_fake_response(message)
+            return self.user_data
+
+        # Step 3: Start the streaming process
+        stream = self._initialize_stream()
+        yield from self._yield_from_stream(stream)
+
+    def _add_user_message(self, message):
         self.user_data["chat"].append({
             "role": "user",
             "content": message
         })
 
-        if FAKE_CHAT:
-            self.user_data["chat"].append({
-                "role": "assistant",
-                "content": f'You said "{message}"'
-            })
-            return self.user_data
+    def _add_fake_response(self, message):
+        self.user_data["chat"].append({
+            "role": "assistant",
+            "content": f'You said "{message}"'
+        })
 
-        stream = client.chat.completions.create(
+    def _initialize_stream(self):
+        self.user_data["chat"].append({
+            "role": "assistant",
+            "content": ""
+        })
+        return client.chat.completions.create(
             model="gpt-4o-mini",
             messages=self.user_data["chat"],
             stream=True,
             tools=self.google_calendar.get_tool_metadata()
         )
-
-        # TODO: this is not thread safe
-        self.user_data["chat"].append({
-            "role": "assistant",
-            "content": ""
-        })
-
+    
+    def _yield_from_stream(self, stream):
+        # Step 4: Placeholder for incomplete function calls
         partial_function_calls = {}
-        
+
         for chunk in stream:
-            # Check if there are tool calls in the current chunk
+            # Step 5: Process tool calls if present
             if chunk.choices[0].delta.tool_calls is not None:
-                for tool_call in chunk.choices[0].delta.tool_calls:
-                    print(tool_call)
-                    index = tool_call.index
-                    if index not in partial_function_calls:
-                        # Initialize the structure for a new function call
-                        partial_function_calls[index] = {
-                            "name": tool_call.function.name,
-                            "arguments": "",
-                            "tool_call_id": tool_call.id
-                        }
-                    
-                    # Accumulate the arguments
-                    partial_function_calls[index]["arguments"] += tool_call.function.arguments
+                yield from self._process_tool_calls(chunk, partial_function_calls)
 
-                    # Check if the arguments are complete (in this case, by detecting a closing brace)
-                    if partial_function_calls[index]["arguments"].endswith('"}'):
-                        # We assume the function call is now complete
-                        completed_function_call = partial_function_calls.pop(index)
-                        function_name = completed_function_call["name"]
-                        function_arguments = completed_function_call["arguments"]
-                        function_call_id = completed_function_call["tool_call_id"]
-
-                        # Create the function call message
-                        function_call_message = {
-                            "role": "assistant",
-                            "tool_calls": [
-                                {
-                                    "id": function_call_id,
-                                    "type": "function",
-                                    "function": {
-                                        "arguments": json.dumps(function_arguments),
-                                        "name": function_name
-                                    }
-                                }
-                            ]
-                        }
-
-                        # Append the function call message to the conversation
-                        self.user_data["chat"].append(function_call_message)
-                        
-                        # Process the function call (e.g., execute it)
-                        print(f"Executing function '{function_name}' with arguments: {function_arguments}")
-                        
-                        # Execute your function here using function_name and function_arguments
-                        result = self.google_calendar.process_function_call(function_name, function_arguments)
-                        function_call_result_message = {
-                            "role": "tool",
-                            "content": json.dumps(result),
-                            "tool_call_id": function_call_id
-                        }
-
-                        # Append this result to the conversation
-                        self.user_data["chat"].append(function_call_result_message)
-
-                        # TODO: make it stream and use tools
-                        response = client.chat.completions.create(
-                            model="gpt-4o-mini",
-                            messages=self.user_data["chat"]
-                        )
-                        print(response)
-                        self.user_data["chat"].append({
-                            "role": "assistant",
-                            "content": response.choices[0].message.content
-                        })
-
-                        # Yield updated user data if needed
-                        yield self.user_data
-
+            # Step 6: Handle real-time content streaming
             if chunk.choices[0].delta.content is not None:
                 self.user_data["chat"][-1]["content"] += chunk.choices[0].delta.content
-                # Stream full data because the chat might modify events and todo
-                # list while running a single query through function calling
                 yield self.user_data
 
-    def get_data(self):
-        return self.user_data
+
+    def _process_tool_calls(self, chunk, partial_function_calls):
+        for tool_call in chunk.choices[0].delta.tool_calls:
+            print(tool_call)
+            index = tool_call.index
+            # Create new function call
+            if index not in partial_function_calls:
+                partial_function_calls[index] = {
+                    "name": tool_call.function.name,
+                    "arguments": "",
+                    "tool_call_id": tool_call.id
+                }
+            partial_function_calls[index]["arguments"] += tool_call.function.arguments
+
+            if partial_function_calls[index]["arguments"].endswith('"}'):
+                completed_function_call = partial_function_calls.pop(index)
+                self._handle_complete_function_call(completed_function_call)
+
+                # Continue stream
+                stream = self._initialize_stream()
+                yield from self._yield_from_stream(stream)
+
+    def _handle_complete_function_call(self, completed_function_call):
+        function_name = completed_function_call["name"]
+        function_arguments = json.loads(completed_function_call["arguments"])
+        function_call_id = completed_function_call["tool_call_id"]
+
+        # Create the function call message
+        function_call_message = {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": function_call_id,
+                    "type": "function",
+                    "function": {
+                        "arguments": json.dumps(function_arguments),
+                        "name": function_name
+                    }
+                }
+            ]
+        }
+        self.user_data["chat"].append(function_call_message)
+
+        # Execute the function
+        result = self.google_calendar.process_function_call(function_name, function_arguments)
+
+        # Create the result message
+        function_call_result_message = {
+            "role": "tool",
+            "content": json.dumps(result),
+            "tool_call_id": function_call_id
+        }
+        self.user_data["chat"].append(function_call_result_message)
+    
