@@ -184,7 +184,7 @@ function Calendar() {
                           boxSizing: 'border-box',
                         }}
                       >
-                        {event.title}
+                        {event.summary}
                       </div>
                     );
                   })}

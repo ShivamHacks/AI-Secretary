@@ -65,7 +65,12 @@ function Chat() {
                   wordWrap: 'break-word'
                 }}
               >
-                {msg.content}
+                {msg.content.split('\n').map((line, index) => (
+                  <span key={index}>
+                    {line}
+                    <br />
+                  </span>
+                ))}
               </span>
             </div>
           ))}

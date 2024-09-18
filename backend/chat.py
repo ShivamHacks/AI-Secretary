@@ -1,7 +1,9 @@
 import json
 import copy
+from datetime import datetime
 from openai import OpenAI
 from tools.google_calendar import GoogleCalendar
+from tools import utils
 
 client = OpenAI(api_key=open("openai_key.txt", "r").read())
 with open("local_data_example.json", "r") as file:
@@ -9,7 +11,9 @@ with open("local_data_example.json", "r") as file:
 
 system_prompt = """
 You are an AI secretary and life coach. You help your user organize their
-calendar and ensure they are reaching their goals.
+calendar and todo list so that they are reaching their goals. Provide the
+response without using any Markdown formatting like bold or italics. Be
+concise. If the user asks for help, provide a brief explanation of the tool.
 """
 
 FAKE_CHAT = False
@@ -31,11 +35,28 @@ class Chat:
             }
             self.google_calendar = GoogleCalendar()
             self.google_calendar.authenticate()
+            events = self.google_calendar.read_events()
+            if events["success"]:
+                self.user_data["events"] = events["events"]
 
     def get_data(self):
         return self.user_data
+    
+    """
+    The time needs to be updated in the conversation history to ensure that the
+    conversation is up-to-date with the current time. This is important for
+    tools that require the current time, such as scheduling events in the calendar.
+    """
+    def update_time_in_conversation(self):
+        now = datetime.now().strftime(utils.DATE_STRING_FMT)
+        self.user_data["chat"].append({
+            "role": "system",
+            "content": f"Today's date and time is {now}"
+        })
 
     def stream_message_response(self, message):
+        self.update_time_in_conversation()
+
         # Step 1: Handle user input
         self._add_user_message(message)
 
