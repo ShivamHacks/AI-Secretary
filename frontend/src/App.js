@@ -33,10 +33,11 @@ function App() {
             paddingRight: '20px',
           }}>
             <Chat />
-          </div>
+          </div> {/* End of chat */}
 
           <div style={{
             width: '60%',
+            height: '100%',
             display: 'flex',
             flexDirection: 'column',
           }}>
@@ -44,14 +45,14 @@ function App() {
               height: '50%',
             }}>
               <Calendar />
-            </div>
+            </div> {/* End of calendar */}
             <div style={{
               height: 'calc(50% - 20px)',
               paddingTop: '20px',
             }}>
               <Todo />
-            </div>
-          </div>
+            </div> {/* End of todo */}
+          </div> {/* End of calendar and todo parent element */}
         </div>
       </div>
 
