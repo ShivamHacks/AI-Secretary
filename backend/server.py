@@ -27,8 +27,9 @@ class ConnectionManager:
 
     async def handle_message(self, user_id: str, message: str):
         if user_id in self.user_data:
-            for response in self.user_data[user_id].stream_message_response(message):
-                await self.active_connections[user_id].send_text(json.dumps(response))
+            for updated_response in self.user_data[user_id].stream_message_response(message):
+                await self.active_connections[user_id].send_text(json.dumps(updated_response))
+
 
 
 manager = ConnectionManager()

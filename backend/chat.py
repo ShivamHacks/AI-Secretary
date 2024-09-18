@@ -35,9 +35,7 @@ class Chat:
             }
             self.google_calendar = GoogleCalendar()
             self.google_calendar.authenticate()
-            events = self.google_calendar.read_events()
-            if events["success"]:
-                self.user_data["events"] = events["events"]
+            self.update_events()
 
     def get_data(self):
         return self.user_data
@@ -53,6 +51,11 @@ class Chat:
             "role": "system",
             "content": f"Today's date and time is {now}"
         })
+
+    def update_events(self):
+        events_response = self.google_calendar.read_events()
+        if events_response["success"]:
+            self.user_data["events"] = events_response["events"]
 
     def stream_message_response(self, message):
         self.update_time_in_conversation()
@@ -106,6 +109,10 @@ class Chat:
             if chunk.choices[0].delta.content is not None:
                 self.user_data["chat"][-1]["content"] += chunk.choices[0].delta.content
                 yield self.user_data
+
+        # TODO: only update events if something changed, and that too only the changed part
+        self.update_events()
+        yield self.user_data
 
 
     def _process_tool_calls(self, chunk, partial_function_calls):

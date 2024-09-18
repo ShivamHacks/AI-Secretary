@@ -40,14 +40,15 @@ const getTimeSlots = () => {
 function Calendar() {
   const { data } = useDataContext();
 
-  // Scroll to 7 AM on component mount
+  // Scroll to the current time anyitme the data changes
   const scrollContainerRef = useRef(null);
   useEffect(() => {
     if (scrollContainerRef.current) {
-      const scrollToPosition = 7 * totalCellHeight;
+      const currentHour = new Date().getHours();
+      const scrollToPosition = currentHour * totalCellHeight;
       scrollContainerRef.current.scrollTop = scrollToPosition;
     }
-  }, []);
+  }, [data]);
 
   const days = getNext7Days();
   const timeSlots = getTimeSlots();
