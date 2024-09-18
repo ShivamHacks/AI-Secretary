@@ -86,13 +86,20 @@ function Calendar() {
       {/* Calendar Header, will take up as much space as needed */}
       <div style={{
         width: '100%',
-        maxHeight: '20%', // TODO: make it fill as much as it needs and let the cal take the rest without a max height
+        // TODO: make it fill as much as it needs and let the cal take the rest without a max height
+        maxHeight: '20%',
+        textAlign: 'center',
       }}>
         <input
           type="date"
           value={startDate.toISOString().split('T')[0]} // Format date to YYYY-MM-DD
           onChange={(e) => handleDateChange(new Date(e.target.value))}
         />
+        <button
+          onClick={() => handleDateChange(new Date())}
+        >
+          Today
+        </button>
       </div>
       <div style={{
         width: '100%',
