@@ -141,12 +141,6 @@ class GoogleCalendar:
             },
         }
 
-        prompt = (
-            f"Create event? {summary} from {start_date_time} to {end_date_time} [Y/n]: "
-        )
-        if input(prompt) not in ["Y", ""]:
-            return utils.DEFAULT_USER_REJECTED_ACTION_MSG
-
         try:
             event = (
                 self.service.events().insert(calendarId="primary", body=event).execute()
@@ -181,17 +175,6 @@ class GoogleCalendar:
                 "timeZone": "America/Los_Angeles",
             }
 
-        prompt = (
-            f"Update event?"
-            f"{' New Summary: ' + new_summary if new_summary else ' Summary: ' + old_summary}"
-            f"{' New Start Time: ' + new_start_date_time if new_start_date_time else ''}"
-            f"{' New End Time: ' + new_end_date_time if new_end_date_time else ''}"
-            " [Y/n]: "
-        )
-
-        if input(prompt) not in ["Y", ""]:
-            return utils.DEFAULT_USER_REJECTED_ACTION_MSG
-
         try:
             updated_event = (
                 self.service.events()
@@ -201,21 +184,15 @@ class GoogleCalendar:
         except HttpError as error:
             return {"success": False, "error": error}
 
+        # TODO: return which event was created
         return {"success": True}
 
     def delete_event(self, event_id):
         event = (
             self.service.events().get(calendarId="primary", eventId=event_id).execute()
         )
-        prompt = (
-            f"Delete event? Summary: {event.get('summary', 'No Summary')}"
-            f" Start: {utils.from_rfc3339(event['start']['dateTime'])}"
-            f" End: {utils.from_rfc3339(event['end']['dateTime'])}"
-            f" [Y/n]: "
-        )
-        if input(prompt) not in ["Y", ""]:
-            return utils.DEFAULT_USER_REJECTED_ACTION_MSG
 
+        # TODO: can this fail?
         self.service.events().delete(calendarId="primary", eventId=event_id).execute()
         return {"success": True}
 
