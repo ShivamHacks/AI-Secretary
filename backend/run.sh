@@ -1,2 +1,2 @@
 source .venv/bin/activate
-python app.py
+uvicorn server:app --reload
