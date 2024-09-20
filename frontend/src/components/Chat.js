@@ -2,8 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useDataContext } from "./DataProvider";
 
 function Chat() {
-  const { data, isConnected, addMessage } = useDataContext();
-  console.log(data);
+  const { data, addMessage } = useDataContext();
   const [inputMessage, setInputMessage] = useState(""); // Track the input message
   const bottomRef = useRef(null); // Create a ref for the bottom of the chat
 

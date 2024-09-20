@@ -11,11 +11,13 @@ class ConnectionManager:
         self.active_connections: Dict[str, WebSocket] = {}
         self.user_data: Dict[str, Chat] = {}
 
-    async def connect(self, websocket: WebSocket, user_id: str):
+    async def connect(self, websocket: WebSocket, user_id: str, access_token: str):
         await websocket.accept()
         self.active_connections[user_id] = websocket
         if user_id not in self.user_data:
             self.user_data[user_id] = Chat(user_id)
+
+        self.user_data[user_id].set_access_token(access_token)
 
     def disconnect(self, user_id: str):
         self.active_connections.pop(user_id, None)
@@ -35,10 +37,10 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
-@app.websocket("/ws/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: str):
+@app.websocket("/ws/{user_id}/{access_token}")
+async def websocket_endpoint(websocket: WebSocket, user_id: str, access_token: str):
     try:
-        await manager.connect(websocket, user_id)
+        await manager.connect(websocket, user_id, access_token)
         await manager.send_initial_data(user_id)
 
         while True:

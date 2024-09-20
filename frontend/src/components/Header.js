@@ -1,30 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useDataContext } from "./DataProvider";
 
-const Header = ({logout}) => {
-  const { setUser } = useDataContext();
-  const [message, setMessage] = useState('user1');
-
-  const sendMessage = () => {
-    setUser(message);
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      sendMessage(); // Call send message function when Enter is pressed
-    }
-  };
-
+const Header = () => {
+  const { logout } = useDataContext();
   return (
     <div>
-      <button onClick={sendMessage}>Set User</button>
       <button onClick={logout}>Logout</button>
-      <input
-        type="text"
-        value={message}
-        onChange={e => setMessage(e.target.value)}
-        onKeyDown={handleKeyDown} // Add this to capture Enter key press
-      />
     </div>
   );
 };

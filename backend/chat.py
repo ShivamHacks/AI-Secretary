@@ -34,12 +34,14 @@ class Chat:
                 "todo": []
             }
             self.google_calendar = GoogleCalendar()
-            self.google_calendar.authenticate()
-            self.update_events()
 
     def get_data(self):
         return self.user_data
     
+    def set_access_token(self, access_token):
+        self.google_calendar.set_access_token(access_token)
+        self.update_events()
+
     """
     The time needs to be updated in the conversation history to ensure that the
     conversation is up-to-date with the current time. This is important for

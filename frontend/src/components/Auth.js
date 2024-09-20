@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import Cookies from 'js-cookie';
+import { useDataContext } from "./DataProvider";
 
 const COOKIE_STRING = "userInfo";
 
@@ -69,10 +70,12 @@ const getStoredUserData = async () => {
         return null;
     }
     console.log("User info cookie is valid");
-    return storedUserInfo;
+    return userInfo;
 };
 
-function Auth({ setUserInfo }) {
+function Auth() {
+    const { setUserInfo } = useDataContext();
+
     const handleClick = () => {
         // TODO(security): do token storage and authentication on server.
         // So redirect to server when logging in and then redirect back to frontend

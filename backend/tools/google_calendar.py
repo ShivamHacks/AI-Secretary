@@ -43,6 +43,15 @@ class GoogleCalendar:
         except HttpError as error:
             print(f"An error occurred: {error}")
 
+    def set_access_token(self, access_token):
+        creds = Credentials(token=access_token)
+
+        try:
+            self.service = build("calendar", "v3", credentials=creds)
+            print("Successfully authenticated using access token.")
+        except HttpError as error:
+            print(f"An error occurred: {error}")
+
     def get_or_create_calendar(
         self, calendar_id_path="google_calendar_id.txt", summary="TestCalendar"
     ):

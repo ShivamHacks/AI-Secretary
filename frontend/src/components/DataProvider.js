@@ -1,15 +1,19 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import Cookies from 'js-cookie';
 
 const DataContext = createContext();
 
 const SAMPLE_LOCAL_DATA = require('./local_data_example.json');
-const SOCKET_URL = "ws://localhost:8000/ws/";
 const USE_LOCAL_DATA = false;
 
+function createWebSocketUrl(user_data, access_token) {
+  return `ws://localhost:8000/ws/${user_data}/${access_token}`;
+}
+
 export const DataProvider = ({ children }) => {
+  const [userInfo, setUserInfo] = useState(null);
   const [data, setData] = useState({ chat: [], events: [], todo: [] });
   const [multiUserData, setUserData] = useState({});
-  const [currentUser, setCurrentUser] = useState('user1');
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
 
@@ -18,7 +22,11 @@ export const DataProvider = ({ children }) => {
       setData(SAMPLE_LOCAL_DATA);
       setIsConnected(false); // No connection, since local data is used
     } else {
-      socketRef.current = new WebSocket(SOCKET_URL + currentUser);
+      if (!userInfo) {
+        console.log("User is not logged in");
+        return;
+      }
+      socketRef.current = new WebSocket(createWebSocketUrl(userInfo.email, userInfo.accessToken));
 
       socketRef.current.onopen = () => {
         console.log("WebSocket connected");
@@ -58,23 +66,7 @@ export const DataProvider = ({ children }) => {
         socketRef.current.close();
       };
     }
-  }, [currentUser]);
-
-  const setUser = (user) => {
-    if (currentUser !== user) {
-      console.log(`Switching user from ${currentUser} to: ${user}`);
-      if (USE_LOCAL_DATA) {
-        // Save the current user data before switching
-        setUserData((userData) => {
-          userData[currentUser] = data;
-          return userData;
-        });
-        // Switch the user and load their data
-        setData(multiUserData[user] || SAMPLE_LOCAL_DATA);
-      }
-      setCurrentUser(user);
-    }
-  };
+  }, [userInfo]);
 
   const addMessage = (message) => {
     const newMessage = { role: "user", content: message };
@@ -100,9 +92,14 @@ export const DataProvider = ({ children }) => {
     });
   };
 
+  const logout = () => {
+    Cookies.remove('userInfo');
+    setUserInfo(null);
+  };
+
   // Provide the state and functions to children components
   return (
-    <DataContext.Provider value={{ data, isConnected, addMessage, setUser }}>
+    <DataContext.Provider value={{ data, addMessage, userInfo, setUserInfo, logout }}>
       {children}
     </DataContext.Provider>
   );
