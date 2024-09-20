@@ -7,38 +7,18 @@ import Header from './components/Header';
 import Auth from './components/Auth';
 import { DataProvider } from "./components/DataProvider";
 
-const verifyAccessToken = async (accessToken) => {
-  try {
-    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${accessToken}`);
-    const data = await response.json();
-    if (data.error) {
-      console.error('Invalid Access Token:', data.error_description);
-      return false;
-    } else {
-      console.log('Valid Access Token:', data);
-      return true;
-    }
-  } catch (error) {
-    console.error('Error verifying access token:', error);
-    return false;
-  }
-};
-
 function App() {
-  const [token, setToken] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
 
-  // Check if there is an access token stored
-  useEffect(() => {
-    const storedToken = Cookies.get("accessToken");
-    if (storedToken && verifyAccessToken(storedToken)) {
-      setToken(storedToken);
-    }
-  }, []);
+  const logout = () => {
+    Cookies.remove('userInfo');
+    setUserInfo(null);
+  };
 
   return (
     <div>
       {
-        token ? (
+        userInfo ? (
           <DataProvider>
             <div style={{
               display: 'flex',
@@ -51,7 +31,7 @@ function App() {
               <div style={{
                 height: '5%',
               }}>
-                <Header />
+                <Header logout={logout} />
               </div>
 
               {/* Main Layout Section (Chat, Calendar, Todo) */}
@@ -90,7 +70,7 @@ function App() {
 
           </DataProvider >
         ) : (
-          <Auth setToken={setToken} />
+          <Auth setUserInfo={setUserInfo} />
         )
       }
     </div>

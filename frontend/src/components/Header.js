@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useDataContext } from "./DataProvider";
 
-const Header = () => {
+const Header = ({logout}) => {
   const { setUser } = useDataContext();
   const [message, setMessage] = useState('user1');
 
@@ -18,6 +18,7 @@ const Header = () => {
   return (
     <div>
       <button onClick={sendMessage}>Set User</button>
+      <button onClick={logout}>Logout</button>
       <input
         type="text"
         value={message}
