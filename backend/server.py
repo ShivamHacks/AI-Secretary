@@ -1,10 +1,12 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
 from typing import Dict
 import json
+from datetime import datetime
 from chat import Chat
+from tools import utils
 
 app = FastAPI()
-
+start_time = datetime.now()
 
 class ConnectionManager:
     def __init__(self):
@@ -58,3 +60,8 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, access_token: s
 
     except WebSocketDisconnect:
         manager.disconnect(user_id)
+
+
+@app.get("/")
+def root():
+    return f"Server up since {start_time.strftime(utils.DATE_STRING_FMT)}"
