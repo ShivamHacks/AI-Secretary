@@ -8,6 +8,7 @@ const USE_LOCAL_DATA = false;
 
 function createWebSocketUrl(user_data, access_token) {
   return `ws://localhost:8000/ws/${user_data}/${access_token}`;
+  // return `http://ec2-3-141-106-24.us-east-2.compute.amazonaws.com:8000/ws/${user_data}/${access_token}`;
 }
 
 export const DataProvider = ({ children }) => {
