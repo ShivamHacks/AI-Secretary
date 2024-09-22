@@ -45,6 +45,18 @@ ec2.authorize_security_group_ingress(
             'FromPort': 443,  # HTTPS port
             'ToPort': 443,
             'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+        },
+        {
+            'IpProtocol': 'tcp',
+            'FromPort': 8000,   # Custom port for your application, used for backend
+            'ToPort': 8000,
+            'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+        },
+        {
+            'IpProtocol': 'tcp',
+            'FromPort': 3000,   # Custom port for your application, used for frontend
+            'ToPort': 3000,
+            'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
         }
     ]
 )

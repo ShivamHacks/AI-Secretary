@@ -29,6 +29,9 @@ ssh-add ~/.ssh/id_ed25519
 # Set right permissions
 chmod 600 ~/.ssh/config
 
+# Verify working
+ssh -vT git@github.com
+
 # Step 6: Copy SSH public key to clipboard (macOS pbcopy)
 if [[ "$OSTYPE" == "darwin"* ]]; then
     pbcopy < ~/.ssh/id_ed25519.pub
