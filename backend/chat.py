@@ -3,6 +3,7 @@ import copy
 from datetime import datetime
 from openai import OpenAI
 from tools.google_calendar import GoogleCalendar
+from tools.task_manager import TaskManager
 from tools import utils
 
 client = OpenAI(api_key=open("openai_key.txt", "r").read())
@@ -34,6 +35,8 @@ class Chat:
                 "todo": []
             }
             self.google_calendar = GoogleCalendar()
+
+        self.task_manager = TaskManager(self.user_data["todo"])
 
     def get_data(self):
         return self.user_data
@@ -95,7 +98,7 @@ class Chat:
             model="gpt-4o-mini",
             messages=self.user_data["chat"],
             stream=True,
-            tools=self.google_calendar.get_tool_metadata()
+            tools=self.google_calendar.get_tool_metadata() + self.task_manager.get_tool_metadata()
         )
     
     def _yield_from_stream(self, stream):
@@ -135,6 +138,7 @@ class Chat:
                 self._handle_complete_function_call(completed_function_call)
 
                 # Continue stream
+                print("Continuing stream after function call")
                 stream = self._initialize_stream()
                 yield from self._yield_from_stream(stream)
 
@@ -159,8 +163,15 @@ class Chat:
         }
         self.user_data["chat"].append(function_call_message)
 
-        # Execute the function
-        result = self.google_calendar.process_function_call(function_name, function_arguments)
+        # Determine which tool to use based on the function name prefix
+        print("Calling function:", function_name, function_arguments)
+        if function_name.startswith("calendar_"):
+            result = self.google_calendar.process_function_call(function_name, function_arguments)
+        elif function_name.startswith("task_"):
+            result = self.task_manager.process_function_call(function_name, function_arguments)
+        else:
+            raise ValueError(f"Unknown function name prefix for function: {function_name}")
+        print("Got result:", result)
 
         # Create the result message
         function_call_result_message = {

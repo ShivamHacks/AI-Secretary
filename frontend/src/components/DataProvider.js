@@ -18,16 +18,24 @@ export const DataProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
 
+  const connectToSocket = () => {
+    if (!userInfo) {
+      console.log("User is not logged in");
+      return false;
+    }
+    socketRef.current = new WebSocket(createWebSocketUrl(userInfo.email, userInfo.accessToken));
+    return true;
+  };
+
   useEffect(() => {
     if (USE_LOCAL_DATA) {
       setData(SAMPLE_LOCAL_DATA);
       setIsConnected(false); // No connection, since local data is used
     } else {
-      if (!userInfo) {
-        console.log("User is not logged in");
+      if (!connectToSocket()) {
+        console.log("WebSocket connection not established");
         return;
       }
-      socketRef.current = new WebSocket(createWebSocketUrl(userInfo.email, userInfo.accessToken));
 
       socketRef.current.onopen = () => {
         console.log("WebSocket connected");
@@ -60,6 +68,10 @@ export const DataProvider = ({ children }) => {
       socketRef.current.onclose = () => {
         console.log("WebSocket connection closed");
         setIsConnected(false);
+        setTimeout(() => {
+          console.log("Retrying WebSocket connection...");
+          connectToSocket();
+        }, 2000);
       };
 
       return () => {
