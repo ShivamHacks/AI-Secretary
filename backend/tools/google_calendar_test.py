@@ -4,7 +4,7 @@ from .google_calendar import GoogleCalendar
 from . import utils
 
 
-class TestGoogleCalendar(unittest.TestCase):
+class TestWithMockGoogleCalendar(unittest.TestCase):
 
     @patch("googleapiclient.discovery.build")
     @patch("builtins.input", return_value="Y")

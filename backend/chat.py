@@ -122,7 +122,6 @@ class Chat:
 
     def _process_tool_calls(self, chunk, partial_function_calls):
         for tool_call in chunk.choices[0].delta.tool_calls:
-            print(tool_call)
             index = tool_call.index
             # Create new function call
             if index not in partial_function_calls:
@@ -171,7 +170,7 @@ class Chat:
             result = self.task_manager.process_function_call(function_name, function_arguments)
         else:
             raise ValueError(f"Unknown function name prefix for function: {function_name}")
-        print("Got result:", result)
+        print("Got result:", json.dumps(result)[:100] + "...")
 
         # Create the result message
         function_call_result_message = {

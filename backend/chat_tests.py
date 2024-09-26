@@ -1,4 +1,5 @@
 import unittest
+import json
 from datetime import datetime, timedelta
 from tools.google_calendar import GoogleCalendar
 from tools.task_manager import TaskManager
@@ -20,15 +21,15 @@ class TestAISecretaryReal(unittest.TestCase):
         self.events_before = self.chat.google_calendar.read_events()["events"]
 
     def test_add_event_evening(self):
-        message = "add time for coffee in the evening"
+        message = "add time for coffee today in the evening"
         response = list(self.chat.stream_message_response(message))
-        print(response)
+        print("Got response:", json.dumps(response)[:100] + "...")
 
         events_after = self.chat.google_calendar.read_events()["events"]
         new_events = [
             event for event in events_after if event not in self.events_before
         ]
-        print(new_events)
+        print("Created new events:", json.dumps(new_events)[:100] + "...")
 
         coffee_event = None
         for event in new_events:
@@ -40,6 +41,11 @@ class TestAISecretaryReal(unittest.TestCase):
         self.assertIsNotNone(coffee_event, "No new 'coffee' event was found")
         event_start_time = datetime.strptime(
             coffee_event["start"], utils.DATE_STRING_FMT
+        )
+        self.assertEqual(
+            event_start_time.date(),
+            datetime.now().date(),
+            "Event is not scheduled for today",
         )
         self.assertGreaterEqual(event_start_time.hour, 18, "Event is not after 6 PM")
         self.assertLess(event_start_time.hour, 24, "Event is not before midnight")
