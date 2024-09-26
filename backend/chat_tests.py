@@ -18,7 +18,25 @@ class TestAISecretaryReal(unittest.TestCase):
         cls.chat.task_manager = TaskManager([])
 
     def setUp(self):
+        print(f"\nRunning test: {self._testMethodName}\n")
         self.events_before = self.chat.google_calendar.read_events()["events"]
+        self.tasks_before = self.chat.task_manager.task_list
+
+        # Create a temporary event to use in the test where the chat history doesn't have context
+        # This will be cleaned up in tearDown because it was added after storing the events_before
+        start_time = (datetime.now() + timedelta(hours=1)).strftime(
+            utils.DATE_STRING_FMT
+        )
+        end_time = (datetime.now() + timedelta(hours=2)).strftime(utils.DATE_STRING_FMT)
+        response = self.chat.google_calendar.create_event(
+            start_date_time=start_time,
+            end_date_time=end_time,
+            summary="Temporary Test Event",
+        )
+
+        self.assertTrue(response["success"], "Failed to create temporary event")
+        self.temp_event = response["event"]
+        self.temp_event_id = self.temp_event["id"]
 
     def test_add_event_evening(self):
         message = "add time for coffee today in the evening"
@@ -49,6 +67,33 @@ class TestAISecretaryReal(unittest.TestCase):
         )
         self.assertGreaterEqual(event_start_time.hour, 18, "Event is not after 6 PM")
         self.assertLess(event_start_time.hour, 24, "Event is not before midnight")
+
+    def test_update_event_via_chat(self):
+        update_message = f"update the event '{self.temp_event['summary']}' to 'Updated Temporary Event'"
+        response = list(self.chat.stream_message_response(update_message))
+        print("Got response for updating event:", json.dumps(response)[:100] + "...")
+
+        events_after = self.chat.google_calendar.read_events()["events"]
+        updated_event = next(
+            (event for event in events_after if event["id"] == self.temp_event_id), None
+        )
+        self.assertIsNotNone(updated_event, "Updated event not found")
+        self.assertEqual(
+            updated_event["summary"],
+            "Updated Temporary Event",
+            "Event summary was not updated",
+        )
+
+    def test_delete_event_via_chat(self):
+        delete_message = f"delete the event '{self.temp_event['summary']}'"
+        response = list(self.chat.stream_message_response(delete_message))
+        print("Got response for deleting event:", json.dumps(response)[:100] + "...")
+
+        events_after = self.chat.google_calendar.read_events()["events"]
+        deleted_event = next(
+            (event for event in events_after if event["id"] == self.temp_event_id), None
+        )
+        self.assertIsNone(deleted_event, "Event was not deleted")
 
     def tearDown(self):
         # Cleanup: Delete only the new events added during the test
