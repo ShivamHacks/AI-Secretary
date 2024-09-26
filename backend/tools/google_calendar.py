@@ -148,7 +148,7 @@ class GoogleCalendar:
         except HttpError as error:
             return {"success": False, "error": error}
 
-        return {"success": True}
+        return {"success": True, "event": event}
 
     def update_event(
         self,
