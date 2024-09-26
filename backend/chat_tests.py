@@ -68,7 +68,7 @@ class TestAISecretaryReal(unittest.TestCase):
         self.assertGreaterEqual(event_start_time.hour, 18, "Event is not after 6 PM")
         self.assertLess(event_start_time.hour, 24, "Event is not before midnight")
 
-    def test_update_event_via_chat(self):
+    def test_update_event_when_not_in_chat_history(self):
         update_message = f"update the event '{self.temp_event['summary']}' to 'Updated Temporary Event'"
         response = list(self.chat.stream_message_response(update_message))
         print("Got response for updating event:", json.dumps(response)[:100] + "...")
@@ -84,7 +84,7 @@ class TestAISecretaryReal(unittest.TestCase):
             "Event summary was not updated",
         )
 
-    def test_delete_event_via_chat(self):
+    def test_delete_event_when_not_in_chat_history(self):
         delete_message = f"delete the event '{self.temp_event['summary']}'"
         response = list(self.chat.stream_message_response(delete_message))
         print("Got response for deleting event:", json.dumps(response)[:100] + "...")
