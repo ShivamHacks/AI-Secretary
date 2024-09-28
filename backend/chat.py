@@ -6,6 +6,14 @@ from tools.google_calendar import GoogleCalendar
 from tools.task_manager import TaskManager
 from tools import utils
 
+"""
+Bugs:
+- right now returns from yield for each function call. Try adding 3 tasks at once and responds multiple times:
+
+"I've got a few admin things I need to do. I need to open the chase mail by next Tuesday, and do my laundry tomorrow. Can you add this to my todo list?"
+
+"""
+
 client = OpenAI(api_key=open("openai_key.txt", "r").read())
 with open("local_data_example.json", "r") as file:
     example_data = json.load(file)
@@ -40,6 +48,11 @@ class Chat:
 
     def get_data(self):
         return self.user_data
+    
+    def set_data(self, data):
+        self.user_data = data
+        self.task_manager.set_data(data["todo"])
+        self.update_events()
     
     def set_access_token(self, access_token):
         self.google_calendar.set_access_token(access_token)

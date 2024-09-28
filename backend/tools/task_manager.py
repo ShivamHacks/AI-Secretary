@@ -7,6 +7,9 @@ class TaskManager:
     def __init__(self, task_list):
         self.task_list = task_list
 
+    def set_data(self, task_list):
+        self.task_list = task_list
+
     def create_task(self, task, deadline, category):
         new_task = {"task": task, "deadline": deadline, "category": category}
         self.task_list.append(new_task)
