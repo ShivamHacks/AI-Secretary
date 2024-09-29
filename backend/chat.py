@@ -121,6 +121,7 @@ class Chat:
         for chunk in stream:
             # Step 5: Process tool calls if present
             if chunk.choices[0].delta.tool_calls is not None:
+                print("Processing tool calls, starting with ", chunk.choices[0].delta.tool_calls)
                 yield from self._process_tool_calls(chunk, partial_function_calls)
 
             # Step 6: Handle real-time content streaming
@@ -145,12 +146,11 @@ class Chat:
                 }
             partial_function_calls[index]["arguments"] += tool_call.function.arguments
 
-            if partial_function_calls[index]["arguments"].endswith('"}'):
+            if partial_function_calls[index]["arguments"].endswith('}'):
                 completed_function_call = partial_function_calls.pop(index)
                 self._handle_complete_function_call(completed_function_call)
 
                 # Continue stream
-                print("Continuing stream after function call")
                 stream = self._initialize_stream()
                 yield from self._yield_from_stream(stream)
 
