@@ -56,7 +56,6 @@ class Chat:
     
     def set_access_token(self, access_token):
         self.google_calendar.set_access_token(access_token)
-        self.update_events()
 
     """
     The time needs to be updated in the conversation history to ensure that the
@@ -146,6 +145,8 @@ class Chat:
                 }
             partial_function_calls[index]["arguments"] += tool_call.function.arguments
 
+            # TODO: this should probably be a proper grammar because there can be
+            # nested arguments / dictionary arguments in the future
             if partial_function_calls[index]["arguments"].endswith('}'):
                 completed_function_call = partial_function_calls.pop(index)
                 self._handle_complete_function_call(completed_function_call)

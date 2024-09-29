@@ -20,17 +20,18 @@ class ConnectionManager:
             self.user_data[user_id] = Chat(user_id)
 
         self.user_data[user_id].set_access_token(access_token)
-        try:
-            with open("saved_chat.json", "r") as file:
-                self.user_data[user_id].set_data(json.load(file))
-        except FileNotFoundError:
-            pass
 
     def disconnect(self, user_id: str):
         self.active_connections.pop(user_id, None)
 
     async def send_initial_data(self, user_id: str):
         if user_id in self.active_connections:
+            try:
+                with open("saved_chat.json", "r") as file:
+                    self.user_data[user_id].set_data(json.load(file))
+            except FileNotFoundError:
+                pass
+
             initial_data = self.user_data[user_id].get_data()
             await self.active_connections[user_id].send_text(json.dumps(initial_data))
 
