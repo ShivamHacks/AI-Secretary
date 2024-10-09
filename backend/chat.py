@@ -23,31 +23,26 @@ response without using any Markdown formatting like bold or italics. Be
 concise. If the user asks for help, provide a brief explanation of the tool.
 """
 
-FAKE_CHAT = False
-
 
 class Chat:
 
     def __init__(self, user_id):
         self.user_id = user_id
-        # Use DataManager to manage local and cloud data
         self.data_manager = DataManager(user_id)
         self.google_calendar = GoogleCalendar()
-
-        # Fetch user data (chat, events, todo) from DataManager
-        self.user_data = self.data_manager.get_user_data()
-
-        self.task_manager = TaskManager(self.user_data["todo"])
+        # TODO: this is modifying the local cache, but not the cloud cache
+        self.task_manager = TaskManager(self.data_manager.get_user_data()["todo"])
 
     def get_data(self):
-        # Get the latest data from the local cache (synced with Firebase)
-        return self.user_data
+        return self.data_manager.get_user_data()
 
     def set_data(self, data):
-        self.user_data = data
+        self.data_manager._update_local_and_cloud("chat", data["chat"])
+        self.data_manager._update_local_and_cloud("events", data["events"])
+        self.data_manager._update_local_and_cloud("todo", data["todo"])
         self.task_manager.set_data(data["todo"])
         self.update_events()
-    
+
     def set_access_token(self, access_token):
         self.google_calendar.set_access_token(access_token)
 
@@ -59,78 +54,58 @@ class Chat:
     def update_time_in_conversation(self):
         now = datetime.now().strftime(utils.DATE_STRING_FMT)
         # Append time to chat using DataManager
-        self.data_manager.append_chat_message({
-            "role": "system",
-            "content": f"Today's date and time is {now}"
-        })
+        self.data_manager.append_chat_message(
+            {"role": "system", "content": f"Today's date and time is {now}"}
+        )
 
     def update_events(self):
         events_response = self.google_calendar.read_events()
         if events_response["success"]:
             # Use DataManager to update the events
-            self.data_manager._update_local_and_cloud("events", events_response["events"])
+            self.data_manager._update_local_and_cloud(
+                "events", events_response["events"]
+            )
 
     def stream_message_response(self, message):
         self.update_time_in_conversation()
-
-        # Step 1: Handle user input
         self._add_user_message(message)
-
-        # Step 2: Fake chat for testing
-        if FAKE_CHAT:
-            self._add_fake_response(message)
-            return self.data_manager.get_user_data()
-
-        # Step 3: Start the streaming process
         stream = self._initialize_stream()
+        print("Starting stream")
         yield from self._yield_from_stream(stream)
 
     def _add_user_message(self, message):
-        # Use DataManager to append user message to chat
-        self.data_manager.append_chat_message({
-            "role": "user",
-            "content": message
-        })
-
-    def _add_fake_response(self, message):
-        self.data_manager.append_chat_message({
-            "role": "assistant",
-            "content": f'You said "{message}"'
-        })
+        self.data_manager.append_chat_message({"role": "user", "content": message})
 
     def _initialize_stream(self):
-        self.data_manager.append_chat_message({
-            "role": "assistant",
-            "content": ""
-        })
         return client.chat.completions.create(
             model="gpt-4o-mini",
             messages=self.data_manager.get_chat(),
             stream=True,
-            tools=self.google_calendar.get_tool_metadata() + self.task_manager.get_tool_metadata()
+            tools=self.google_calendar.get_tool_metadata()
+            + self.task_manager.get_tool_metadata(),
         )
-    
+
     def _yield_from_stream(self, stream):
-        # Step 4: Placeholder for incomplete function calls
         partial_function_calls = {}
+        streamed_response = ""
 
         for chunk in stream:
-            # Step 5: Process tool calls if present
+            # Tool calls
             if chunk.choices[0].delta.tool_calls is not None:
-                print("Processing tool calls, starting with ", chunk.choices[0].delta.tool_calls)
+                print(
+                    "Processing tool calls, starting with ",
+                    chunk.choices[0].delta.tool_calls,
+                )
                 yield from self._process_tool_calls(chunk, partial_function_calls)
 
-            # Step 6: Handle real-time content streaming
+            # Real time content streaming
             if chunk.choices[0].delta.content is not None:
-                last_message = self.data_manager.get_chat()[-1]
-                last_message["content"] += chunk.choices[0].delta.content
-                # TODO: no need to update the entire chat just for the last message
-                self.data_manager._update_local_and_cloud("chat", self.data_manager.get_chat())
-                yield self.data_manager.get_user_data()
+                streamed_response += chunk.choices[0].delta.content
+                yield {"type": "chunk", "chunk": chunk.choices[0].delta.content}
 
         # TODO: only update events if something changed, and that too only the changed part
+        self.data_manager.append_chat_message({"role": "assistant", "content": streamed_response})
         self.update_events()
-        yield self.data_manager.get_user_data()
 
     def _process_tool_calls(self, chunk, partial_function_calls):
         for tool_call in chunk.choices[0].delta.tool_calls:
@@ -140,13 +115,13 @@ class Chat:
                 partial_function_calls[index] = {
                     "name": tool_call.function.name,
                     "arguments": "",
-                    "tool_call_id": tool_call.id
+                    "tool_call_id": tool_call.id,
                 }
             partial_function_calls[index]["arguments"] += tool_call.function.arguments
 
             # TODO: this should probably be a proper grammar because there can be
             # nested arguments / dictionary arguments in the future
-            if partial_function_calls[index]["arguments"].endswith('}'):
+            if partial_function_calls[index]["arguments"].endswith("}"):
                 completed_function_call = partial_function_calls.pop(index)
                 self._handle_complete_function_call(completed_function_call)
 
@@ -168,27 +143,33 @@ class Chat:
                     "type": "function",
                     "function": {
                         "arguments": json.dumps(function_arguments),
-                        "name": function_name
-                    }
+                        "name": function_name,
+                    },
                 }
-            ]
+            ],
         }
         self.data_manager.append_chat_message(function_call_message)
 
         # Determine which tool to use based on the function name prefix
         print("Calling function:", function_name, function_arguments)
         if function_name.startswith("calendar_"):
-            result = self.google_calendar.process_function_call(function_name, function_arguments)
+            result = self.google_calendar.process_function_call(
+                function_name, function_arguments
+            )
         elif function_name.startswith("task_"):
-            result = self.task_manager.process_function_call(function_name, function_arguments)
+            result = self.task_manager.process_function_call(
+                function_name, function_arguments
+            )
         else:
-            raise ValueError(f"Unknown function name prefix for function: {function_name}")
+            raise ValueError(
+                f"Unknown function name prefix for function: {function_name}"
+            )
         print("Got result:", json.dumps(result)[:100] + "...")
 
         # Create the result message
         function_call_result_message = {
             "role": "tool",
             "content": json.dumps(result),
-            "tool_call_id": function_call_id
+            "tool_call_id": function_call_id,
         }
         self.data_manager.append_chat_message(function_call_result_message)

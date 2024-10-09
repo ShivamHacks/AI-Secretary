@@ -45,16 +45,28 @@ export const DataProvider = ({ children }) => {
       socketRef.current.onmessage = (event) => {
         try {
           const receivedData = JSON.parse(event.data);
-          if (
-            receivedData &&
-            Array.isArray(receivedData.chat) &&
-            Array.isArray(receivedData.events) &&
-            Array.isArray(receivedData.todo)
-          ) {
-            // Override the local state with the server data
-            setData(receivedData);
+          if (receivedData.type === 'chunk') {
+            // Handle the streamed message chunk (partial message)
+            setData((prevData) => {
+              // Find the last message and update its content if it's partial
+              const updatedChat = [...prevData.chat];
+              const lastMessageIndex = updatedChat.length - 1;
+              if (lastMessageIndex == 0) {
+                return prevData;
+              }
+              updatedChat[lastMessageIndex].content += receivedData.chunk;
+              return {
+                ...prevData,
+                chat: updatedChat
+              };
+            });
+          } else if (receivedData.type === 'final') {
+            // Handle the final updated data after the stream is done
+            setData(() => {
+              return receivedData.data;
+            });
           } else {
-            console.error("Received invalid data format");
+            console.error("Received unknown data type");
           }
         } catch (err) {
           console.error("Error parsing WebSocket message:", err);
@@ -84,13 +96,13 @@ export const DataProvider = ({ children }) => {
   const addMessage = (message) => {
     const newMessage = { role: "user", content: message };
     setData((prevData) => {
-      let updatedChat = [...prevData.chat, newMessage];
-      if (USE_LOCAL_DATA) {
-        updatedChat = [...updatedChat, {
-          role: "assistant",
-          content: `You typed "${message}"`,
-        }];
-      } else if (socketRef.current && isConnected) {
+      // Add user message and empty assistant response
+      let updatedChat = [...prevData.chat, newMessage, {
+        role: "assistant",
+        content: "",
+      }];
+      // Send the message to the server if connected
+      if (socketRef.current && isConnected) {
         const messagePayload = JSON.stringify({ newMessage: message });
         console.log("Sending message to server:", messagePayload);
         socketRef.current.send(messagePayload);

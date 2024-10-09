@@ -8,6 +8,7 @@ from tools import utils
 app = FastAPI()
 start_time = datetime.now()
 
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[str, WebSocket] = {}
@@ -26,22 +27,24 @@ class ConnectionManager:
 
     async def send_initial_data(self, user_id: str):
         if user_id in self.active_connections:
-            try:
-                with open("saved_chat.json", "r") as file:
-                    self.user_data[user_id].set_data(json.load(file))
-            except FileNotFoundError:
-                pass
-
-            initial_data = self.user_data[user_id].get_data()
-            await self.active_connections[user_id].send_text(json.dumps(initial_data))
+            await self.active_connections[user_id].send_text(
+                json.dumps(
+                    {"type": "final", "data": self.user_data[user_id].get_data()}
+                )
+            )
 
     async def handle_message(self, user_id: str, message: str):
         if user_id in self.user_data:
-            for updated_response in self.user_data[user_id].stream_message_response(message):
-                await self.active_connections[user_id].send_text(json.dumps(updated_response))
+            # Stream the message response back to the client
+            for chunk in self.user_data[user_id].stream_message_response(message):
+                await self.active_connections[user_id].send_text(json.dumps(chunk))
 
-            with open("saved_chat.json", "w") as file:
-                json.dump(self.user_data[user_id].get_data(), file)
+            # After the stream, pull updates (Google Calendar, etc.) and send final updated data
+            await self.active_connections[user_id].send_text(
+                json.dumps(
+                    {"type": "final", "data": self.user_data[user_id].get_data()}
+                )
+            )
 
 
 manager = ConnectionManager()
