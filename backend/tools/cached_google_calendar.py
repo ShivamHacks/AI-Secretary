@@ -345,25 +345,3 @@ class CachedGoogleCalendar:
             return result
 
         return {"status": "error", "message": "Function not found"}
-
-
-if __name__ == "__main__":
-    gc = CachedGoogleCalendar()
-    gc.authenticate_locally()
-    print(
-        gc.create_event(
-            datetime.now().strftime(utils.DATE_STRING_FMT),
-            (datetime.now() + timedelta(hours=1)).strftime(utils.DATE_STRING_FMT),
-            "Test Event",
-        )
-    )
-    print("-" * 50)
-    print(gc.pending_operations)
-    print("-" * 50)
-    print(gc.sync_with_google_calendar())
-    print("-" * 50)
-    print(gc.list_cached_events())
-    print("-" * 50)
-    print(gc.delete_event(gc.list_cached_events()[0]["id"]))
-    print("-" * 50)
-    print(gc.sync_with_google_calendar())
