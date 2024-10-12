@@ -15,11 +15,6 @@ class TestAISecretaryReal(unittest.TestCase):
         print(f"\nRunning test: {self._testMethodName}\n")
         self.chat = Chat(user_id="test_user")
 
-        # TEMPORARY - clear db until don't actually update DB
-        #self.chat.data_manager._update_local_and_cloud("chat", self.chat.data_manager.get_chat()[0])
-        self.chat.data_manager._update_local_and_cloud("events", [])
-        self.chat.data_manager._update_local_and_cloud("todo", [])
-
     @unittest.skip("Works, can prevent skipping later")
     def test_add_event(self):
         message = "add an hour for coffee today at 6pm"
@@ -55,6 +50,7 @@ class TestAISecretaryReal(unittest.TestCase):
         list(self.chat.stream_message_response(message))
         print(self.chat.data_manager.get_chat()[-1])
 
+        # actually, don't need to check the pending operations. Can just check cache
         self.assertEqual(
             len(self.chat.google_calendar.pending_operations),
             2,

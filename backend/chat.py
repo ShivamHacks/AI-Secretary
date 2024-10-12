@@ -42,9 +42,9 @@ class Chat:
         return self.data_manager.get_user_data()
 
     def set_data(self, data):
-        self.data_manager._update_local_and_cloud("chat", data["chat"])
-        self.data_manager._update_local_and_cloud("events", data["events"])
-        self.data_manager._update_local_and_cloud("todo", data["todo"])
+        self.data_manager._update_local("chat", data["chat"])
+        self.data_manager._update_local("events", data["events"])
+        self.data_manager._update_local("todo", data["todo"])
         self.task_manager.set_data(data["todo"])
         self.update_events()
 
@@ -67,7 +67,7 @@ class Chat:
         events_response = self.google_calendar.read_events()
         if events_response["success"]:
             # Use DataManager to update the events
-            self.data_manager._update_local_and_cloud(
+            self.data_manager._update_local(
                 "events", events_response["events"]
             )
 
