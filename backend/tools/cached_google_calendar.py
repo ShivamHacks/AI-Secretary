@@ -10,7 +10,7 @@ from googleapiclient.discovery import build
 from google.auth.exceptions import RefreshError
 from googleapiclient.errors import HttpError
 
-import utils
+from tools import utils
 
 
 class CachedGoogleCalendar:
@@ -103,6 +103,24 @@ class CachedGoogleCalendar:
 
         self.cache = events_list  # Update local cache
         return {"success": True, "events": events_list}
+    
+    def read_events(self, start_date_time=None, end_date_time=None):
+        """
+        Returns events from cache that are within the start and end date if the parameter is set.
+        """
+        filtered_events = []
+        for event in self.cache:
+            event_start = utils.from_rfc3339(event["start"]["dateTime"])
+            event_end = utils.from_rfc3339(event["end"]["dateTime"])
+            
+            if start_date_time and event_start < start_date_time:
+                continue
+            if end_date_time and event_end > end_date_time:
+                continue
+            
+            filtered_events.append(event)
+
+        return {"success": True, "events": filtered_events}
 
     def create_event(self, start_date_time, end_date_time, summary):
         """

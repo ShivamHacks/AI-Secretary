@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from openai import OpenAI
-from tools.google_calendar import GoogleCalendar
+from tools.cached_google_calendar import CachedGoogleCalendar
 from tools.task_manager import TaskManager
 from tools import utils
 from database.cached_cloud_db import DataManager  # Import your DataManager class
@@ -29,9 +29,14 @@ class Chat:
     def __init__(self, user_id):
         self.user_id = user_id
         self.data_manager = DataManager(user_id)
-        self.google_calendar = GoogleCalendar()
+        self.google_calendar = CachedGoogleCalendar()
         # TODO: this is modifying the local cache, but not the cloud cache
         self.task_manager = TaskManager(self.data_manager.get_user_data()["todo"])
+
+        # If the chat is empty, i.e. new user, then add the system prompt
+        # TODO: find better way to do this
+        if len(self.data_manager.get_chat()) == 0:
+            self.data_manager.append_chat_message({"role": "assistant", "content": system_prompt})
 
     def get_data(self):
         return self.data_manager.get_user_data()
@@ -90,13 +95,22 @@ class Chat:
         streamed_response = ""
 
         for chunk in stream:
+            print(chunk.choices[0])
             # Tool calls
+            if chunk.choices[0].finish_reason == "tool_calls":
+                print("Completed tool calls: ", partial_function_calls)
+                for index, function_call in partial_function_calls.items():
+                    # HACK
+                    if index != 0:
+                        continue
+                    self._handle_complete_function_call(function_call)
+
+                    # need to start new stream because function calls done
+                    print("Starting stream inner")
+                    print("Chat history: ", self.data_manager.get_chat())
+                    yield from self._yield_from_stream(self._initialize_stream())
             if chunk.choices[0].delta.tool_calls is not None:
-                print(
-                    "Processing tool calls, starting with ",
-                    chunk.choices[0].delta.tool_calls,
-                )
-                yield from self._process_tool_calls(chunk, partial_function_calls)
+                self._process_tool_calls(chunk, partial_function_calls)
 
             # Real time content streaming
             if chunk.choices[0].delta.content is not None:
@@ -110,6 +124,7 @@ class Chat:
     def _process_tool_calls(self, chunk, partial_function_calls):
         for tool_call in chunk.choices[0].delta.tool_calls:
             index = tool_call.index
+
             # Create new function call
             if index not in partial_function_calls:
                 partial_function_calls[index] = {
@@ -118,16 +133,6 @@ class Chat:
                     "tool_call_id": tool_call.id,
                 }
             partial_function_calls[index]["arguments"] += tool_call.function.arguments
-
-            # TODO: this should probably be a proper grammar because there can be
-            # nested arguments / dictionary arguments in the future
-            if partial_function_calls[index]["arguments"].endswith("}"):
-                completed_function_call = partial_function_calls.pop(index)
-                self._handle_complete_function_call(completed_function_call)
-
-                # Continue stream
-                stream = self._initialize_stream()
-                yield from self._yield_from_stream(stream)
 
     def _handle_complete_function_call(self, completed_function_call):
         function_name = completed_function_call["name"]
@@ -164,7 +169,7 @@ class Chat:
             raise ValueError(
                 f"Unknown function name prefix for function: {function_name}"
             )
-        print("Got result:", json.dumps(result)[:100] + "...")
+        print("Got function call result:", json.dumps(result)[:100] + "...")
 
         # Create the result message
         function_call_result_message = {

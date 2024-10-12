@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import tzlocal
 import pytz
 
@@ -56,3 +56,7 @@ def from_rfc3339(rfc3339_str, timezone_str=get_local_timezone()):
     local_date_time = utc_date_time.astimezone(local_tz)
     date_time_str = local_date_time.strftime(DATE_STRING_FMT)
     return date_time_str
+
+
+def now_plus_hours(num_hours):
+    return (datetime.now() + timedelta(hours=num_hours)).strftime(DATE_STRING_FMT)

@@ -8,10 +8,6 @@ import utils
 from datetime import datetime, timedelta
 
 
-def now_plus_hours(num_hours):
-    return (datetime.now() + timedelta(hours=num_hours)).strftime(utils.DATE_STRING_FMT)
-
-
 class TestCachedGoogleCalendar(unittest.TestCase):
 
     def setUp(self):
@@ -22,8 +18,8 @@ class TestCachedGoogleCalendar(unittest.TestCase):
     @patch.object(CachedGoogleCalendar, "sync_with_google_calendar")
     def test_create_event(self, mock_sync, mock_read, mock_auth):
         # Test data
-        start_date_time = now_plus_hours(0)
-        end_date_time = now_plus_hours(1)
+        start_date_time = utils.now_plus_hours(0)
+        end_date_time = utils.now_plus_hours(1)
         summary = "Test Event"
 
         # Call the method
@@ -54,11 +50,11 @@ class TestCachedGoogleCalendar(unittest.TestCase):
                 "id": event_id,
                 "summary": "Old Event",
                 "start": {
-                    "dateTime": utils.to_rfc3339(now_plus_hours(0)),
+                    "dateTime": utils.to_rfc3339(utils.now_plus_hours(0)),
                     "timeZone": "America/Los_Angeles",
                 },
                 "end": {
-                    "dateTime": utils.to_rfc3339(now_plus_hours(2)),
+                    "dateTime": utils.to_rfc3339(utils.now_plus_hours(2)),
                     "timeZone": "America/Los_Angeles",
                 },
             }
@@ -66,8 +62,8 @@ class TestCachedGoogleCalendar(unittest.TestCase):
 
         # Update the event
         new_summary = "Updated Event"
-        new_start_date_time = now_plus_hours(6)
-        new_end_date_time = now_plus_hours(10)
+        new_start_date_time = utils.now_plus_hours(6)
+        new_end_date_time = utils.now_plus_hours(10)
         result = self.calendar.update_event(
             event_id, new_summary, new_start_date_time, new_end_date_time
         )
@@ -96,11 +92,11 @@ class TestCachedGoogleCalendar(unittest.TestCase):
                 "id": event_id,
                 "summary": "Test Event",
                 "start": {
-                    "dateTime": now_plus_hours(3),
+                    "dateTime": utils.now_plus_hours(3),
                     "timeZone": "America/Los_Angeles",
                 },
                 "end": {
-                    "dateTime": now_plus_hours(5),
+                    "dateTime": utils.now_plus_hours(5),
                     "timeZone": "America/Los_Angeles",
                 },
             }
@@ -124,11 +120,11 @@ class TestCachedGoogleCalendar(unittest.TestCase):
                 "id": str(uuid.uuid4()),
                 "summary": "Event 1",
                 "start": {
-                    "dateTime": now_plus_hours(3),
+                    "dateTime": utils.now_plus_hours(3),
                     "timeZone": "America/Los_Angeles",
                 },
                 "end": {
-                    "dateTime": now_plus_hours(6),
+                    "dateTime": utils.now_plus_hours(6),
                     "timeZone": "America/Los_Angeles",
                 },
             },
@@ -136,11 +132,11 @@ class TestCachedGoogleCalendar(unittest.TestCase):
                 "id": str(uuid.uuid4()),
                 "summary": "Event 2",
                 "start": {
-                    "dateTime": now_plus_hours(5),
+                    "dateTime": utils.now_plus_hours(5),
                     "timeZone": "America/Los_Angeles",
                 },
                 "end": {
-                    "dateTime": now_plus_hours(8),
+                    "dateTime": utils.now_plus_hours(8),
                     "timeZone": "America/Los_Angeles",
                 },
             },
