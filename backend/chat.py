@@ -95,7 +95,7 @@ class Chat:
         streamed_response = ""
 
         for chunk in stream:
-            print(chunk.choices[0])
+            # print(chunk.choices[0])
             # Tool calls
             if chunk.choices[0].finish_reason == "tool_calls":
                 print("Completed tool calls: ", partial_function_calls)

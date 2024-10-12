@@ -172,12 +172,13 @@ class CachedGoogleCalendar:
                         "dateTime": utils.to_rfc3339(new_end_date_time),
                         "timeZone": "America/Los_Angeles",
                     }
-                break
 
-        # Add to pending operations
-        self.pending_operations.append(("update", event_id, event))
-        print(f"Event with id {event_id} updated in cache and pending update.")
-        return {"success": True, "event": event}
+                # Add to pending operations
+                self.pending_operations.append(("update", event_id, event))
+                print(f"Event with id {event_id} updated in cache and pending update.")
+                return {"success": True, "event": event}
+            
+        return {"success": False, "reason": f"Could not find event with id {event_id}"}
 
     def delete_event(self, event_id):
         """
@@ -338,6 +339,7 @@ class CachedGoogleCalendar:
             },
         ]
 
+    # NOT USED??
     def process_function_calls(self, function_calls):
         results = []
         for call in function_calls:
