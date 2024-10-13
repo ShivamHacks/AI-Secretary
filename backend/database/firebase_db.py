@@ -1,16 +1,41 @@
 import firebase_admin
 from firebase_admin import credentials, firestore
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import os
+import pytz
 
 
-cred = credentials.Certificate(os.path.join(os.path.dirname(__file__), 'firebase_creds.json'))
+cred = credentials.Certificate(
+    os.path.join(os.path.dirname(__file__), "firebase_creds.json")
+)
 firebase_admin.initialize_app(cred)
+
 
 class FirebaseDBManager:
     def __init__(self):
         self.db = firestore.client()
+
+    def send_feedback(self, user_id, feedback):
+        print("uploading feedback", feedback)
+        doc_ref = self.db.collection("feedback").document(user_id)
+        doc = doc_ref.get()
+        if not doc.exists or "feedback" not in doc.to_dict():
+            doc_ref.set({"feedback": []})
+        doc_ref.update(
+            {
+                "feedback": firestore.ArrayUnion(
+                    [
+                        {
+                            "feedback": feedback,
+                            "timestamp": datetime.now(
+                                pytz.timezone("America/Los_Angeles")
+                            ).strftime("%Y-%m-%d %I:%M:%S %p %Z"),
+                        }
+                    ]
+                )
+            }
+        )
 
     def _get_user_doc(self, user_id):
         return self.db.collection("users").document(user_id)

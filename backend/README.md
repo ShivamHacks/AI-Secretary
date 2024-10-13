@@ -16,3 +16,9 @@ Architectural changes to make
 
 Smaller refactorings
 - calendar cache should use database cache? same for todo list
+
+Latency
+- anytime the local cache changes, push to client so it feels snappy
+
+UX
+- add messaging dots so users know message was received

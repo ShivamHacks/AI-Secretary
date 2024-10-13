@@ -117,6 +117,17 @@ export const DataProvider = ({ children }) => {
     });
   };
 
+  const sendFeedback = (feedback) => {
+    if (socketRef.current && isConnected) {
+      const feedbackPayload = JSON.stringify({ feedback: feedback });
+      console.log("Sending feedback to server:", feedbackPayload);
+      socketRef.current.send(feedbackPayload);
+    } else {
+      // TODO: make this an error message
+      console.log("WebSocket is not connected. Could not send feedback");
+    }
+  };
+
   const logout = () => {
     Cookies.remove('userInfo');
     setUserInfo(null);
@@ -124,7 +135,7 @@ export const DataProvider = ({ children }) => {
 
   // Provide the state and functions to children components
   return (
-    <DataContext.Provider value={{ data, addMessage, userInfo, setUserInfo, logout }}>
+    <DataContext.Provider value={{ data, addMessage, userInfo, setUserInfo, logout, sendFeedback }}>
       {children}
     </DataContext.Provider>
   );
