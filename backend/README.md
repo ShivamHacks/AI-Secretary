@@ -12,3 +12,6 @@ Architectural changes to make
   errors, JSON serialization to give to GPT, and difficult to refactor fields.
 - topical logging. E.g. event CRUD, DB CRUD, ...
 - better error logging in a privacy safe way
+
+Smaller refactorings
+- calendar cache should use database cache?

@@ -37,21 +37,23 @@ class Chat:
         # TODO: find better way to do this
         if len(self.data_manager.get_chat()) == 0:
             self.data_manager.append_chat_message(
-                {"role": "assistant", "content": system_prompt}
+                {"role": "system", "content": system_prompt}
             )
 
     def get_data(self):
         return self.data_manager.get_user_data()
 
-    def set_data(self, data):
-        self.data_manager._update_local("chat", data["chat"])
-        self.data_manager._update_local("events", data["events"])
-        self.data_manager._update_local("todo", data["todo"])
-        self.task_manager.set_data(data["todo"])
-        self.update_events()
-
+    def load_from_database(self):
+        self.data_manager.load_cache_from_cloud()
+    
     def set_access_token(self, access_token):
         self.google_calendar.set_access_token(access_token)
+
+    def load_calendar(self):
+        events_response = self.google_calendar.read_events()
+        if events_response["success"]:
+            self.data_manager._update_local("events", events_response["events"])
+        return
 
     def update_time_in_conversation(self):
         """
@@ -77,12 +79,8 @@ class Chat:
         relevant_events = self.google_calendar.read_events(start_date, end_date)[
             "events"
         ]
-        self.data_manager.append_chat_message(
-            {
-                "role": "system",
-                "content": f"The last 7 days and next 14 days worth of events are:\n",
-            }
-        )
+        if len(relevant_events) == 0:
+            return
 
         # Create a table string for relevant events
         events_table = "ID\t\tStart\tEnd\t\tEvent\n"
@@ -100,12 +98,6 @@ class Chat:
                 "content": f"The last 7 days and next 14 days worth of events are:\n{events_table}",
             }
         )
-
-    def update_events(self):
-        events_response = self.google_calendar.read_events()
-        if events_response["success"]:
-            # Use DataManager to update the events
-            self.data_manager._update_local("events", events_response["events"])
 
     def stream_message_response(self, message):
         self.update_time_in_conversation()
@@ -153,7 +145,6 @@ class Chat:
         self.data_manager.append_chat_message(
             {"role": "assistant", "content": streamed_response}
         )
-        self.update_events()
 
     def _process_tool_calls(self, chunk, partial_function_calls):
         for tool_call in chunk.choices[0].delta.tool_calls:

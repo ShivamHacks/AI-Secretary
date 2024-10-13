@@ -1,19 +1,21 @@
 import uuid
 from database.firebase_db import FirebaseDBManager
 
+
 class DataManager:
     def __init__(self, user_id):
         self.user_id = user_id
         self.db_manager = FirebaseDBManager()
-        self.local_cache = self.db_manager.create_or_get_user(user_id, self._default_data())
+        self.local_cache = self._default_data()
         self.cloud_updates = []  # Accumulates cloud updates
 
+    def load_cache_from_cloud(self):
+        self.local_cache = self.db_manager.create_or_get_user(
+            self.user_id, self._default_data()
+        )
+
     def _default_data(self):
-        return {
-            "chat": [],
-            "events": [],
-            "todo": []
-        }
+        return {"chat": [], "events": [], "todo": []}
 
     def get_user_data(self):
         return self.local_cache
@@ -57,8 +59,10 @@ class DataManager:
 
     def remove_event(self, event_id):
         # More efficient event removal without saving all non-removed events to the cloud right away
-        updated_events = [event for event in self.local_cache['events'] if event['id'] != event_id]
-        self._update_local('events', updated_events)
+        updated_events = [
+            event for event in self.local_cache["events"] if event["id"] != event_id
+        ]
+        self._update_local("events", updated_events)
 
     # Todo management with randomly generated ID
     def get_todo_list(self):
@@ -69,11 +73,13 @@ class DataManager:
             "id": str(uuid.uuid4()),
             "task": task,
             "deadline": deadline,
-            "category": category
+            "category": category,
         }
         self._append_to_local("todo", todo_item)
 
     def remove_todo_item(self, todo_id):
         # Efficient removal of a specific todo item
-        updated_todo = [todo for todo in self.local_cache['todo'] if todo['id'] != todo_id]
-        self._update_local('todo', updated_todo)
+        updated_todo = [
+            todo for todo in self.local_cache["todo"] if todo["id"] != todo_id
+        ]
+        self._update_local("todo", updated_todo)

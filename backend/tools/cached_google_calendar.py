@@ -55,6 +55,15 @@ class CachedGoogleCalendar:
         except HttpError as error:
             print(f"An error occurred: {error}")
 
+    def set_access_token(self, access_token):
+        creds = Credentials(token=access_token)
+
+        try:
+            self.service = build("calendar", "v3", credentials=creds)
+            print("Successfully authenticated using access token.")
+        except HttpError as error:
+            print(f"An error occurred: {error}")
+
     def read_events_to_cache(self, start_date_time=None, end_date_time=None):
         """
         Reads all events from the Google Calendar and stores them in the local cache.
@@ -83,12 +92,12 @@ class CachedGoogleCalendar:
                 for event in events["items"]:
                     event_entry = {"id": event["id"]}
                     if "start" in event and "dateTime" in event["start"]:
-                        event_entry["start"] = utils.from_rfc3339(
-                            event["start"]["dateTime"]
+                        event_entry["start"] = utils.date_from_string(
+                            utils.from_rfc3339(event["start"]["dateTime"])
                         )
                     if "end" in event and "dateTime" in event["end"]:
-                        event_entry["end"] = utils.from_rfc3339(
-                            event["end"]["dateTime"]
+                        event_entry["end"] = utils.date_from_string(
+                            utils.from_rfc3339(event["end"]["dateTime"])
                         )
                     if "summary" in event:
                         event_entry["summary"] = event["summary"]
@@ -103,24 +112,26 @@ class CachedGoogleCalendar:
 
         self.cache = events_list  # Update local cache
         return {"success": True, "events": events_list}
-    
+
     def read_events(self, start_date_time=None, end_date_time=None):
         """
         Returns events from cache that are within the start and end date if the parameter is set.
         """
 
-        start_date_time = utils.date_from_string(start_date_time) if start_date_time else None
+        start_date_time = (
+            utils.date_from_string(start_date_time) if start_date_time else None
+        )
         end_date_time = utils.date_from_string(end_date_time) if end_date_time else None
         filtered_events = []
         for event in self.cache:
             event_start = event["start"]["dateTime"]
             event_end = event["end"]["dateTime"]
-            
+
             if start_date_time and event_start < start_date_time:
                 continue
             if end_date_time and event_end > end_date_time:
                 continue
-            
+
             filtered_events.append(event)
 
         # Perhaps should return string versions of these events, otherwise they're datetime objects
@@ -176,7 +187,7 @@ class CachedGoogleCalendar:
                 # Add to pending operations
                 self.pending_operations.append(("update", event_id, event))
                 return {"success": True, "event": event}
-            
+
         return {"success": False, "reason": f"Could not find event with id {event_id}"}
 
     def delete_event(self, event_id):

@@ -26,25 +26,31 @@ class ConnectionManager:
         self.active_connections.pop(user_id, None)
 
     async def send_initial_data(self, user_id: str):
-        if user_id in self.active_connections:
-            await self.active_connections[user_id].send_text(
-                json.dumps(
-                    {"type": "final", "data": self.user_data[user_id].get_data()}
-                )
+        chat = self.user_data[user_id]
+        chat.load_from_database()
+        chat.load_calendar()
+
+        await self.active_connections[user_id].send_text(
+            json.dumps(
+                {"type": "final", "data": chat.get_data()}
             )
+        )
 
     async def handle_message(self, user_id: str, message: str):
-        if user_id in self.user_data:
-            # Stream the message response back to the client
-            for chunk in self.user_data[user_id].stream_message_response(message):
-                await self.active_connections[user_id].send_text(json.dumps(chunk))
+        # Stream the message response back to the client
+        chat = self.user_data[user_id]
+        connection = self.active_connections[user_id]
+        for chunk in chat.stream_message_response(message):
+            await connection.send_text(json.dumps(chunk))
 
-            # After the stream, pull updates (Google Calendar, etc.) and send final updated data
-            await self.active_connections[user_id].send_text(
-                json.dumps(
-                    {"type": "final", "data": self.user_data[user_id].get_data()}
-                )
+        # After the stream, upload all new data to cloud, pull updates from calendar, and send final data
+        chat.data_manager.apply_cloud_updates()
+        chat.load_calendar()
+        await connection.send_text(
+            json.dumps(
+                {"type": "final", "data": chat.get_data()}
             )
+        )
 
 
 manager = ConnectionManager()
