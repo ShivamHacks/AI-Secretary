@@ -22,3 +22,17 @@ Latency
 
 UX
 - add messaging dots so users know message was received
+
+Refresh server
+
+1. `ssh ec2-user@ec2-3-141-106-24.us-east-2.compute.amazonaws.com`
+2. `cd AI-Secretary`
+3. `git pull origin main`
+4. `cd backend `
+5. `source .venv/bin/activate`
+6. `pip install -r requirements.txt`
+7. `./run.sh`
+
+To send any local credential files:
+
+`scp <file> ec2-user@ec2-3-141-106-24.us-east-2.compute.amazonaws.com:<path>`
