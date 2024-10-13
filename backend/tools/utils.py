@@ -6,6 +6,7 @@ import json
 DATE_STRING_FMT = "%Y-%m-%d %I:%M %p"
 START_DATE_PARAM_DESC = f"The start date and time in {DATE_STRING_FMT} format"
 END_DATE_PARAM_DESC = f"The end date and time in {DATE_STRING_FMT} format"
+DEADLINE_PARAM_DESC = f"The deadline in {DATE_STRING_FMT} format"
 DEFAULT_USER_REJECTED_ACTION_MSG = {
     "success": False,
     "reason": "User rejected calendar action",

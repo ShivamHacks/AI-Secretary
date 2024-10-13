@@ -5,6 +5,7 @@ Server: `uvicorn server:app --reload`
 
 Tests:
 * `python -m tools.google_calendar_test`
+* `python -m unittest chat_tests.TestAISecretaryReal.test_create_task`
 
 Architectural changes to make
 - use objects everywhere, e.g. Chat instance has chat, events, todo. Then Event has id, start, etc. Also same for communicating between server and frontend. Start is a datetime.

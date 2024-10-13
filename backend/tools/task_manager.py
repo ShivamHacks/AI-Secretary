@@ -17,7 +17,7 @@ class TaskManager:
             "category": category,
         }
         self.data_manager._append_to_local("todo", new_task)
-        return {"success": True, "message": "Task added successfully"}
+        return {"success": True, "task": new_task}
 
     def update_task(self, task_id, new_task=None, new_deadline=None, new_category=None):
         for task in self.data_manager.get_cache("todo"):
@@ -62,7 +62,7 @@ class TaskManager:
                             },
                             "deadline": {
                                 "type": "string",
-                                "description": "The deadline of the task",
+                                "description": utils.DEADLINE_PARAM_DESC,
                             },
                             "category": {
                                 "type": "string",
@@ -132,21 +132,3 @@ class TaskManager:
             return result
 
         return {"status": "error", "message": "Function not found"}
-
-
-# Sample usage:
-if __name__ == "__main__":
-    task_list = []
-    task_manager = TaskManager(task_list)
-    print(
-        task_manager.create_task(
-            "Finish project report",
-            datetime(2024, 10, 10).strftime(utils.DATE_STRING_FMT),
-            "Work",
-        )
-    )
-    print("Tasks: ", task_list)
-    print(task_manager.update_task(0, new_task="Complete final project report"))
-    print("Tasks: ", task_list)
-    print(task_manager.delete_task(0))
-    print("Tasks: ", task_list)
