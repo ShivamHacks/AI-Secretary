@@ -123,6 +123,20 @@ class TestAISecretaryReal(unittest.TestCase):
         tasks = self.chat.data_manager.get_cache("todo")
         self.assertEqual(len(tasks), 0, "There shouldn't be any tasks")
 
+    def test_create_multiple_tasks(self):
+        message = (
+            "Please add laundry, dishes, and week planning to my task list due tomorrow"
+        )
+        list(self.chat.stream_message_response(message))
+
+        tasks = self.chat.data_manager.get_cache("todo")
+        self.assertEqual(len(tasks), 3, "Should have 3 new tasks")
+        required_tasks = ["laundry", "dishes", "week planning"]
+        task_names = [task["task"].lower() for task in tasks]
+        self.assertTrue(
+            all(item in task_names for item in required_tasks), "Some tasks are missing"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
