@@ -7,8 +7,12 @@ const SAMPLE_LOCAL_DATA = require('./local_data_example.json');
 const USE_LOCAL_DATA = false;
 
 function createWebSocketUrl(user_data, access_token) {
-  return `ws://localhost:8000/ws/${user_data}/${access_token}`;
-  // return `http://ec2-3-141-106-24.us-east-2.compute.amazonaws.com:8000/ws/${user_data}/${access_token}`;
+  const isLocalhost = window.location.hostname === "localhost";
+  if (isLocalhost) {
+    return `ws://localhost:8000/ws/${user_data}/${access_token}`;
+  } else {
+    return `ws://ec2-3-141-106-24.us-east-2.compute.amazonaws.com:8000/ws/${user_data}/${access_token}`;
+  }
 }
 
 export const DataProvider = ({ children }) => {
@@ -65,6 +69,8 @@ export const DataProvider = ({ children }) => {
             setData(() => {
               return receivedData.data;
             });
+          } else if (receivedData.type === 'feedback_confirmation') {
+            alert(`Feedback submitted: ${receivedData.feedback}`)
           } else {
             console.error("Received unknown data type");
           }

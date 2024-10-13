@@ -53,9 +53,13 @@ class ConnectionManager:
             )
         )
 
-    def send_feedback(self, user_id: str, feedback: str):
+    async def send_feedback(self, user_id: str, feedback: str):
         chat = self.user_data[user_id]
         chat.data_manager.db_manager.send_feedback(user_id, feedback)
+        connection = self.active_connections[user_id]
+        await connection.send_text(
+            json.dumps({"type": "feedback_confirmation", "feedback": feedback})
+        )
 
 
 manager = ConnectionManager()
@@ -77,9 +81,9 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, access_token: s
                 if "newMessage" in received_message:
                     new_message = received_message["newMessage"]
                     await manager.handle_message(user_id, new_message)
-                
+
                 if "feedback" in received_message:
-                    manager.send_feedback(user_id, received_message["feedback"])
+                    await manager.send_feedback(user_id, received_message["feedback"])
 
             except json.JSONDecodeError:
                 await websocket.send_text("Error: Invalid JSON format received.")

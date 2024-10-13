@@ -8,7 +8,8 @@ const Header = () => {
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
-      sendFeedback(feedback) // Call send message function when Enter is pressed
+      sendFeedback(feedback);
+      setFeedback('');
     }
   };
 
