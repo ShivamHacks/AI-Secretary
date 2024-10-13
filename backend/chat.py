@@ -36,7 +36,9 @@ class Chat:
         # If the chat is empty, i.e. new user, then add the system prompt
         # TODO: find better way to do this
         if len(self.data_manager.get_chat()) == 0:
-            self.data_manager.append_chat_message({"role": "assistant", "content": system_prompt})
+            self.data_manager.append_chat_message(
+                {"role": "assistant", "content": system_prompt}
+            )
 
     def get_data(self):
         return self.data_manager.get_user_data()
@@ -68,12 +70,18 @@ class Chat:
         Adds relevant context like previous week and next 2 weeks of events and full task
         list. This should eventually be replaced with RAG.
         """
-        start_date = (datetime.now() - timedelta(days=7)).strftime(utils.DATE_STRING_FMT)
+        start_date = (datetime.now() - timedelta(days=7)).strftime(
+            utils.DATE_STRING_FMT
+        )
         end_date = (datetime.now() + timedelta(days=14)).strftime(utils.DATE_STRING_FMT)
-        relevant_events = self.google_calendar.read_events(start_date, end_date)["events"]
-        print("relevant_events", relevant_events)
+        relevant_events = self.google_calendar.read_events(start_date, end_date)[
+            "events"
+        ]
         self.data_manager.append_chat_message(
-            {"role": "system", "content": f"The last 7 days and next 14 days worth of events are:\n"}
+            {
+                "role": "system",
+                "content": f"The last 7 days and next 14 days worth of events are:\n",
+            }
         )
 
         # Create a table string for relevant events
@@ -85,25 +93,25 @@ class Chat:
             end = utils.string_from_date(event["end"]["dateTime"])
             summary = event["summary"]
             events_table += f"{id}\t{start}\t{end}\t{summary}\n"
-        
+
         self.data_manager.append_chat_message(
-            {"role": "system", "content": f"The last 7 days and next 14 days worth of events are:\n{events_table}"}
+            {
+                "role": "system",
+                "content": f"The last 7 days and next 14 days worth of events are:\n{events_table}",
+            }
         )
 
     def update_events(self):
         events_response = self.google_calendar.read_events()
         if events_response["success"]:
             # Use DataManager to update the events
-            self.data_manager._update_local(
-                "events", events_response["events"]
-            )
+            self.data_manager._update_local("events", events_response["events"])
 
     def stream_message_response(self, message):
         self.update_time_in_conversation()
         self.add_relevant_context_to_chat()
         self._add_user_message(message)
         stream = self._initialize_stream()
-        print("Starting stream")
         yield from self._yield_from_stream(stream)
 
     def _add_user_message(self, message):
@@ -123,10 +131,8 @@ class Chat:
         streamed_response = ""
 
         for chunk in stream:
-            # print(chunk.choices[0])
             # Tool calls
             if chunk.choices[0].finish_reason == "tool_calls":
-                print("Completed tool calls: ", partial_function_calls)
                 for index, function_call in partial_function_calls.items():
                     # HACK
                     if index != 0:
@@ -134,8 +140,6 @@ class Chat:
                     self._handle_complete_function_call(function_call)
 
                     # need to start new stream because function calls done
-                    print("Starting stream inner")
-                    print("Chat history: ", self.data_manager.get_chat())
                     yield from self._yield_from_stream(self._initialize_stream())
             if chunk.choices[0].delta.tool_calls is not None:
                 self._process_tool_calls(chunk, partial_function_calls)
@@ -146,7 +150,9 @@ class Chat:
                 yield {"type": "chunk", "chunk": chunk.choices[0].delta.content}
 
         # TODO: only update events if something changed, and that too only the changed part
-        self.data_manager.append_chat_message({"role": "assistant", "content": streamed_response})
+        self.data_manager.append_chat_message(
+            {"role": "assistant", "content": streamed_response}
+        )
         self.update_events()
 
     def _process_tool_calls(self, chunk, partial_function_calls):
@@ -184,7 +190,6 @@ class Chat:
         self.data_manager.append_chat_message(function_call_message)
 
         # Determine which tool to use based on the function name prefix
-        print("Calling function:", function_name, function_arguments)
         if function_name.startswith("calendar_"):
             result = self.google_calendar.process_function_call(
                 function_name, function_arguments
@@ -194,10 +199,8 @@ class Chat:
                 function_name, function_arguments
             )
         else:
-            raise ValueError(
-                f"Unknown function name prefix for function: {function_name}"
-            )
-        print("Got function call result:", json.dumps(result, cls=utils.DateTimeEncoder)[:100] + "...")
+            print(f"Unknown function name prefix for function: {function_name}")
+            return
 
         # Create the result message
         function_call_result_message = {

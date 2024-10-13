@@ -146,7 +146,6 @@ class CachedGoogleCalendar:
 
         self.cache.append(event)
         self.pending_operations.append(("create", event))
-        print(f"Event added to cache with temporary ID {event} and pending creation.")
         return {"success": True, "event": event}
 
     def update_event(
@@ -176,7 +175,6 @@ class CachedGoogleCalendar:
 
                 # Add to pending operations
                 self.pending_operations.append(("update", event_id, event))
-                print(f"Event with id {event_id} updated in cache and pending update.")
                 return {"success": True, "event": event}
             
         return {"success": False, "reason": f"Could not find event with id {event_id}"}
@@ -189,7 +187,6 @@ class CachedGoogleCalendar:
 
         # Add to pending operations
         self.pending_operations.append(("delete", event_id))
-        print(f"Event with id {event_id} deleted from cache and pending deletion.")
         return {"success": True}
 
     def sync_with_google_calendar(self):
@@ -215,7 +212,6 @@ class CachedGoogleCalendar:
                     .insert(calendarId="primary", body=event_data_without_id)
                     .execute()
                 )
-                print(f"Added event to google calendar: {created_event}")
 
                 # Update the cache with the real Google Calendar event ID
                 for event in self.cache:
@@ -235,17 +231,14 @@ class CachedGoogleCalendar:
                 self.service.events().update(
                     calendarId="primary", eventId=event_id, body=updated_data
                 ).execute()
-                print(f"Updated event with id: {event_id}")
             elif operation[0] == "delete":
                 event_id = operation[1]
                 self.service.events().delete(
                     calendarId="primary", eventId=event_id
                 ).execute()
-                print(f"Deleted event with id: {event_id}")
 
         # Clear the pending operations list after sync
         self.pending_operations.clear()
-        print(f"All pending operations synced with Google Calendar.")
 
     def list_cached_events(self):
         """
