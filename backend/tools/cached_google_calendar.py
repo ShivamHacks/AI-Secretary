@@ -108,10 +108,13 @@ class CachedGoogleCalendar:
         """
         Returns events from cache that are within the start and end date if the parameter is set.
         """
+
+        start_date_time = utils.date_from_string(start_date_time) if start_date_time else None
+        end_date_time = utils.date_from_string(end_date_time) if end_date_time else None
         filtered_events = []
         for event in self.cache:
-            event_start = utils.from_rfc3339(event["start"]["dateTime"])
-            event_end = utils.from_rfc3339(event["end"]["dateTime"])
+            event_start = event["start"]["dateTime"]
+            event_end = event["end"]["dateTime"]
             
             if start_date_time and event_start < start_date_time:
                 continue
@@ -120,6 +123,7 @@ class CachedGoogleCalendar:
             
             filtered_events.append(event)
 
+        # Perhaps should return string versions of these events, otherwise they're datetime objects
         return {"success": True, "events": filtered_events}
 
     def create_event(self, start_date_time, end_date_time, summary):
@@ -127,18 +131,15 @@ class CachedGoogleCalendar:
         Adds a new event to the cache and marks it for creation in Google Calendar.
         A temporary UUID is generated to act as the event ID until synced.
         """
-        start_rfc3339 = utils.to_rfc3339(start_date_time)
-        end_rfc3339 = utils.to_rfc3339(end_date_time)
-
         event = {
             "id": str(uuid.uuid4()),  # Temporary ID
             "summary": summary,
             "start": {
-                "dateTime": start_rfc3339,
+                "dateTime": utils.date_from_string(start_date_time),
                 "timeZone": "America/Los_Angeles",
             },
             "end": {
-                "dateTime": end_rfc3339,
+                "dateTime": utils.date_from_string(end_date_time),
                 "timeZone": "America/Los_Angeles",
             },
         }
@@ -164,12 +165,12 @@ class CachedGoogleCalendar:
                     event["summary"] = new_summary
                 if new_start_date_time:
                     event["start"] = {
-                        "dateTime": utils.to_rfc3339(new_start_date_time),
+                        "dateTime": utils.date_from_string(new_start_date_time),
                         "timeZone": "America/Los_Angeles",
                     }
                 if new_end_date_time:
                     event["end"] = {
-                        "dateTime": utils.to_rfc3339(new_end_date_time),
+                        "dateTime": utils.date_from_string(new_end_date_time),
                         "timeZone": "America/Los_Angeles",
                     }
 
@@ -202,6 +203,12 @@ class CachedGoogleCalendar:
                 # Remove the temporary ID before sending to Google Calendar
                 event_data_without_id = event_data.copy()
                 event_data_without_id.pop("id", None)
+                event_data_without_id["start"]["dateTime"] = utils.to_rfc3339(
+                    utils.string_from_date(event_data_without_id["start"]["dateTime"])
+                )
+                event_data_without_id["end"]["dateTime"] = utils.to_rfc3339(
+                    utils.string_from_date(event_data_without_id["end"]["dateTime"])
+                )
 
                 created_event = (
                     self.service.events()
@@ -218,6 +225,13 @@ class CachedGoogleCalendar:
 
             elif operation[0] == "update":
                 event_id, updated_data = operation[1], operation[2]
+                updated_data["start"]["dateTime"] = utils.to_rfc3339(
+                    utils.string_from_date(updated_data["start"]["dateTime"])
+                )
+                updated_data["end"]["dateTime"] = utils.to_rfc3339(
+                    utils.string_from_date(updated_data["end"]["dateTime"])
+                )
+
                 self.service.events().update(
                     calendarId="primary", eventId=event_id, body=updated_data
                 ).execute()

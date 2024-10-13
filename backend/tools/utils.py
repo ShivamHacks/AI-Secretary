@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import tzlocal
 import pytz
+import json
 
 DATE_STRING_FMT = "%Y-%m-%d %I:%M %p"
 START_DATE_PARAM_DESC = f"The start date and time in {DATE_STRING_FMT} format"
@@ -58,5 +59,24 @@ def from_rfc3339(rfc3339_str, timezone_str=get_local_timezone()):
     return date_time_str
 
 
+def date_from_string(date_time_str):
+    return datetime.strptime(date_time_str, DATE_STRING_FMT)
+
+
+def string_from_date(datetime_obj):
+    return datetime_obj.strftime(DATE_STRING_FMT)
+
+
 def now_plus_hours(num_hours):
     return (datetime.now() + timedelta(hours=num_hours)).strftime(DATE_STRING_FMT)
+
+
+class DateTimeEncoder(json.JSONEncoder):
+    """
+    Used when passing in tool call return values to GPT
+    """
+
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.strftime(DATE_STRING_FMT)
+        return super(DateTimeEncoder, self).default(obj)

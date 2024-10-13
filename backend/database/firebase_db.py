@@ -5,10 +5,11 @@ import json
 import os
 
 
+cred = credentials.Certificate(os.path.join(os.path.dirname(__file__), 'firebase_creds.json'))
+firebase_admin.initialize_app(cred)
+
 class FirebaseDBManager:
     def __init__(self):
-        cred = credentials.Certificate(os.path.join(os.path.dirname(__file__), 'firebase_creds.json'))
-        firebase_admin.initialize_app(cred)
         self.db = firestore.client()
 
     def _get_user_doc(self, user_id):

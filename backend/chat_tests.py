@@ -8,18 +8,15 @@ from chat import Chat
 from tools import utils
 
 
-
 class TestAISecretaryReal(unittest.TestCase):
 
     def setUp(self):
         print(f"\nRunning test: {self._testMethodName}\n")
         self.chat = Chat(user_id="test_user")
 
-    @unittest.skip("Works, can prevent skipping later")
     def test_add_event(self):
         message = "add an hour for coffee today at 6pm"
         list(self.chat.stream_message_response(message))
-        print(self.chat.data_manager.get_chat()[-1])
 
         self.assertEqual(
             len(self.chat.google_calendar.list_cached_events()),
@@ -28,39 +25,38 @@ class TestAISecretaryReal(unittest.TestCase):
         )
         coffee_event = self.chat.google_calendar.list_cached_events()[0]
         self.assertIsNotNone(coffee_event, "No new 'coffee' event was found")
-        event_start_time = datetime.strptime(
-            utils.from_rfc3339(coffee_event["start"]["dateTime"]), utils.DATE_STRING_FMT
-        )
         self.assertEqual(
-            event_start_time.date(),
+            coffee_event["start"]["dateTime"].date(),
             datetime.now().date(),
             "Event is not scheduled for today",
         )
-        self.assertEqual(event_start_time.hour, 18, "Event is not at 6 PM")
+        self.assertEqual(coffee_event["start"]["dateTime"].hour, 18, "Event is not at 6 PM")
 
-    def test_update_event_when_not_in_chat_history(self):
+    def test_update_event_empty_chat_history(self):
         message = "move my evening coffee to 7pm"
         # Add coffee from 6 - 7 to calendar
         start_time = datetime.now().replace(hour=18, minute=0, second=0, microsecond=0)
         end_time = start_time + timedelta(hours=1)
-        coffee_event = self.chat.google_calendar.create_event(
-            datetime.strftime(start_time, utils.DATE_STRING_FMT), datetime.strftime(end_time, utils.DATE_STRING_FMT), "Coffee"
-        )
+        original_event = self.chat.google_calendar.create_event(
+            datetime.strftime(start_time, utils.DATE_STRING_FMT),
+            datetime.strftime(end_time, utils.DATE_STRING_FMT),
+            "Coffee",
+        )["event"]
 
         list(self.chat.stream_message_response(message))
-        print(self.chat.data_manager.get_chat()[-1])
 
-        # actually, don't need to check the pending operations. Can just check cache
         self.assertEqual(
-            len(self.chat.google_calendar.pending_operations),
-            2,
-            f"Should only have create and update operation:\n{pprint.pformat(self.chat.google_calendar.list_cached_events())}",
+            len(self.chat.google_calendar.list_cached_events()),
+            1,
+            f"Should only have one event:\n{pprint.pformat(self.chat.google_calendar.list_cached_events())}",
         )
-        print(self.chat.google_calendar.pending_operations[1])
-        operation_name, event_id, operation = self.chat.google_calendar.pending_operations[1]
-        self.assertEqual(operation_name, "update", f"Not an operation update: {operation}")
-        self.assertEqual(event_id, coffee_event["event"]["id"], "Not updating the right event")
-
+        updated_event = self.chat.google_calendar.list_cached_events()[0]
+        self.assertEqual(original_event["id"], updated_event["id"], "IDs do not match")
+        self.assertEqual(
+            updated_event["start"]["dateTime"],
+            datetime.now().replace(hour=19, minute=0, second=0, microsecond=0),
+            "Did not update time correctly",
+        )
 
     @unittest.skip("Doesn't work for now")
     def test_delete_event_when_not_in_chat_history(self):

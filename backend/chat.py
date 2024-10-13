@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from openai import OpenAI
 from tools.cached_google_calendar import CachedGoogleCalendar
 from tools.task_manager import TaskManager
@@ -51,16 +51,43 @@ class Chat:
     def set_access_token(self, access_token):
         self.google_calendar.set_access_token(access_token)
 
-    """
-    The time needs to be updated in the conversation history to ensure that the
-    conversation is up-to-date with the current time. This is important for
-    tools that require the current time, such as scheduling events in the calendar.
-    """
     def update_time_in_conversation(self):
+        """
+        The time needs to be updated in the conversation history to ensure that the
+        conversation is up-to-date with the current time. This is important for
+        tools that require the current time, such as scheduling events in the calendar.
+        """
         now = datetime.now().strftime(utils.DATE_STRING_FMT)
         # Append time to chat using DataManager
         self.data_manager.append_chat_message(
             {"role": "system", "content": f"Today's date and time is {now}"}
+        )
+
+    def add_relevant_context_to_chat(self):
+        """
+        Adds relevant context like previous week and next 2 weeks of events and full task
+        list. This should eventually be replaced with RAG.
+        """
+        start_date = (datetime.now() - timedelta(days=7)).strftime(utils.DATE_STRING_FMT)
+        end_date = (datetime.now() + timedelta(days=14)).strftime(utils.DATE_STRING_FMT)
+        relevant_events = self.google_calendar.read_events(start_date, end_date)["events"]
+        print("relevant_events", relevant_events)
+        self.data_manager.append_chat_message(
+            {"role": "system", "content": f"The last 7 days and next 14 days worth of events are:\n"}
+        )
+
+        # Create a table string for relevant events
+        events_table = "ID\t\tStart\tEnd\t\tEvent\n"
+        events_table += "-" * 50 + "\n"
+        for event in relevant_events:
+            id = event["id"]
+            start = utils.string_from_date(event["start"]["dateTime"])
+            end = utils.string_from_date(event["end"]["dateTime"])
+            summary = event["summary"]
+            events_table += f"{id}\t{start}\t{end}\t{summary}\n"
+        
+        self.data_manager.append_chat_message(
+            {"role": "system", "content": f"The last 7 days and next 14 days worth of events are:\n{events_table}"}
         )
 
     def update_events(self):
@@ -73,6 +100,7 @@ class Chat:
 
     def stream_message_response(self, message):
         self.update_time_in_conversation()
+        self.add_relevant_context_to_chat()
         self._add_user_message(message)
         stream = self._initialize_stream()
         print("Starting stream")
@@ -169,12 +197,12 @@ class Chat:
             raise ValueError(
                 f"Unknown function name prefix for function: {function_name}"
             )
-        print("Got function call result:", json.dumps(result)[:100] + "...")
+        print("Got function call result:", json.dumps(result, cls=utils.DateTimeEncoder)[:100] + "...")
 
         # Create the result message
         function_call_result_message = {
             "role": "tool",
-            "content": json.dumps(result),
+            "content": json.dumps(result, cls=utils.DateTimeEncoder),
             "tool_call_id": function_call_id,
         }
         self.data_manager.append_chat_message(function_call_result_message)
