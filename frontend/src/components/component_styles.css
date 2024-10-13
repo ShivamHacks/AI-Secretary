@@ -1,0 +1,16 @@
+input {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    margin-right: 10px;
+    flex-grow: 1;
+}
+
+button {
+    padding: 10px 20px;
+    border-radius: 5px;
+    background-color: #0084ff;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useDataContext } from "./DataProvider";
+import './component_styles.css';
 
 function Chat() {
   const { data, addMessage } = useDataContext();
@@ -85,25 +86,8 @@ function Chat() {
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown} // Add this to capture Enter key press
           placeholder="Type a message"
-          style={{
-            padding: '10px',
-            borderRadius: '5px',
-            border: '1px solid #ddd',
-            marginRight: '10px',
-            flexGrow: 1
-          }}
         />
-        <button
-          onClick={handleSendMessage}
-          style={{
-            padding: '10px 20px',
-            borderRadius: '5px',
-            backgroundColor: '#0084ff',
-            color: '#fff',
-            border: 'none',
-            cursor: 'pointer'
-          }}
-        >
+        <button onClick={handleSendMessage}>
           Send
         </button>
       </div>

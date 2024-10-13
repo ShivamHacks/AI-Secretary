@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useDataContext } from "./DataProvider";
+import './component_styles.css';
 
 // CSS consts
 const scrollBarWidth = '17px';

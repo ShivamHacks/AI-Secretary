@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useDataContext } from "./DataProvider";
+import './component_styles.css';
 
 const Header = () => {
   const { logout, sendFeedback } = useDataContext();
@@ -37,11 +38,6 @@ const Header = () => {
         onChange={(e) => setFeedback(e.target.value)}
         onKeyDown={handleKeyDown} // Add this to capture Enter key press
         placeholder="Please share any feedback, ideas, and issues here! Type 'enter' to submit."
-        style={{
-          flexGrow: 1,
-          marginRight: '10px',
-          padding: '5px'
-        }}
       />
       <button onClick={handleSendFeedback} style={{ marginRight: '10px' }}>Send</button>
       <button onClick={logout}>Logout</button>
