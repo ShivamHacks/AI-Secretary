@@ -38,10 +38,6 @@ function TodoList() {
     setSortConfig({ key, direction }); // Update sortConfig, this will trigger re-sorting
   };
 
-  const markAsCompleted = (index) => {
-    // Logic to mark task as completed
-  };
-
   const getArrow = (column) => {
     if (sortConfig.key !== column || sortConfig.direction === 'neutral') {
       return '⇅'; // Neutral sort indicator (can be adjusted)
@@ -63,7 +59,6 @@ function TodoList() {
           }}>
             <tr style={{ height: '50px' }}>
               {/* For the checkboxes */}
-              <th style={{ width: '5%' }}></th>
               <th onClick={() => sortByColumn("task")} style={{ width: '60%', cursor: 'pointer' }}>
                 Task {getArrow("task")}
               </th>
@@ -78,9 +73,6 @@ function TodoList() {
           <tbody>
             {todos.map((todo, index) => (
               <tr key={index} style={{ height: '50px', backgroundColor: index % 2 === 0 ? '#f9f9f9' : '#fff' }}>
-                <td>
-                  <input type="checkbox" onChange={() => markAsCompleted(index)} />
-                </td>
                 <td>{todo.task}</td>
                 <td>{todo.deadline}</td>
                 <td>{todo.category}</td>
