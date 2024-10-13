@@ -10,13 +10,15 @@ from googleapiclient.discovery import build
 from google.auth.exceptions import RefreshError
 from googleapiclient.errors import HttpError
 
+from database.cached_cloud_db import DataManager
 from tools import utils
+
 
 
 class CachedGoogleCalendar:
 
-    def __init__(self):
-        self.cache = []  # Local cache of events
+    def __init__(self, data_manager: DataManager):
+        self.data_manager = data_manager # updates the local cache of this
         self.pending_operations = []  # Accumulated CRUD operations
 
     def authenticate_locally(
@@ -118,7 +120,7 @@ class CachedGoogleCalendar:
             except HttpError as error:
                 return {"success": False, "error": error}
 
-        self.cache = events_list  # Update local cache
+        self.data_manager._update_local("events", events_list)
 
     def read_events(self, start_date_time=None, end_date_time=None):
         """
@@ -130,7 +132,7 @@ class CachedGoogleCalendar:
         )
         end_date_time = utils.date_from_string(end_date_time) if end_date_time else None
         filtered_events = []
-        for event in self.cache:
+        for event in self.data_manager.get_cache("events"):
             if "start" not in event or "dateTime" not in event["start"] or "end" not in event or "dateTime" not in event["end"]:
                 continue
             event_start = event["start"]["dateTime"]
@@ -164,7 +166,7 @@ class CachedGoogleCalendar:
             },
         }
 
-        self.cache.append(event)
+        self.data_manager._append_to_local("events", event)
         self.pending_operations.append(("create", event))
         return {"success": True, "event": event}
 
@@ -178,7 +180,7 @@ class CachedGoogleCalendar:
         """
         Updates an event in the cache and marks it for updating in Google Calendar.
         """
-        for event in self.cache:
+        for event in self.data_manager.get_cache("events"):
             if event["id"] == event_id:
                 if new_summary:
                     event["summary"] = new_summary
@@ -203,7 +205,7 @@ class CachedGoogleCalendar:
         """
         Deletes an event from the cache and marks it for deletion in Google Calendar.
         """
-        self.cache = [event for event in self.cache if event["id"] != event_id]
+        self.data_manager._update_local("events", [event for event in self.data_manager.get_cache("events") if event["id"] != event_id])
 
         # Add to pending operations
         self.pending_operations.append(("delete", event_id))
@@ -235,7 +237,7 @@ class CachedGoogleCalendar:
 
                 # Update the cache with the real Google Calendar event ID
                 # TODO: make this into a map
-                for event in self.cache:
+                for event in self.data_manager.get_cache("events"):
                     if event["id"] == event_data["id"]:  # Match the temp ID
                         event["id"] = created_event["id"]  # Replace with real ID
                         break
@@ -266,7 +268,7 @@ class CachedGoogleCalendar:
         """
         Lists all events currently in the local cache.
         """
-        return self.cache
+        return self.data_manager.get_cache("events")
 
     def get_tool_metadata(self):
         return [

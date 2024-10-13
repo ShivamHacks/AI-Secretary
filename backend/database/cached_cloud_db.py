@@ -19,6 +19,9 @@ class DataManager:
 
     def get_user_data(self):
         return self.local_cache
+    
+    def get_cache(self, field):
+        return self.local_cache[field]
 
     def _update_local(self, field, data):
         """Updates the local cache and queues the update for the cloud."""
@@ -30,6 +33,7 @@ class DataManager:
         self.local_cache[field].append(data)
         self._queue_cloud_update("append", field, data)
 
+    # TODO: for updates to the same field, can just use the latest one and drop all of them. So just set the latest one
     def _queue_cloud_update(self, method, field, data):
         """Accumulates cloud update requests to be applied later."""
         self.cloud_updates.append((method, field, data))

@@ -29,9 +29,8 @@ class Chat:
     def __init__(self, user_id):
         self.user_id = user_id
         self.data_manager = DataManager(user_id)
-        self.google_calendar = CachedGoogleCalendar()
-        # TODO: this is modifying the local cache, but not the cloud cache
-        self.task_manager = TaskManager(self.data_manager.get_user_data()["todo"])
+        self.google_calendar = CachedGoogleCalendar(self.data_manager)
+        self.task_manager = TaskManager(self.data_manager)
 
         # If the chat is empty, i.e. new user, then add the system prompt
         # TODO: find better way to do this
@@ -51,7 +50,6 @@ class Chat:
 
     def load_calendar(self):
         self.google_calendar.read_events_to_cache()
-        self.data_manager._update_local("events", self.google_calendar.cache)
 
     def update_time_in_conversation(self):
         """
@@ -70,6 +68,8 @@ class Chat:
         Adds relevant context like previous week and next 2 weeks of events and full task
         list. This should eventually be replaced with RAG.
         """
+        message = ""
+
         start_date = (datetime.now() - timedelta(days=7)).strftime(
             utils.DATE_STRING_FMT
         )
@@ -77,23 +77,38 @@ class Chat:
         relevant_events = self.google_calendar.read_events(start_date, end_date)[
             "events"
         ]
-        if len(relevant_events) == 0:
-            return
+        if len(relevant_events) != 0:
+            events_table = "ID\t\tStart\tEnd\t\tEvent\n"
+            events_table += "-" * 50 + "\n"
+            for event in relevant_events:
+                id = event["id"]
+                start = utils.string_from_date(event["start"]["dateTime"])
+                end = utils.string_from_date(event["end"]["dateTime"])
+                summary = event["summary"]
+                events_table += f"{id}\t{start}\t{end}\t{summary}\n"
+            
+            message += f"The last 7 days and next 14 days worth of events are:\n{events_table}\n"
 
-        # Create a table string for relevant events
-        events_table = "ID\t\tStart\tEnd\t\tEvent\n"
-        events_table += "-" * 50 + "\n"
-        for event in relevant_events:
-            id = event["id"]
-            start = utils.string_from_date(event["start"]["dateTime"])
-            end = utils.string_from_date(event["end"]["dateTime"])
-            summary = event["summary"]
-            events_table += f"{id}\t{start}\t{end}\t{summary}\n"
+        todo_list = self.data_manager.get_cache("todo")
+        if len(todo_list) > 0:
+            todo_table = "ID\t\Task\tDeadline\t\tCategoru\n"
+            todo_table += "-" * 50 + "\n"
+            for item in todo_list:
+                id = item["id"]
+                task = item["task"]
+                deadline = item["deadline"]
+                category = item["category"]
+                todo_table += f"{id}\t{task}\t{deadline}\t{category}\n"
+            
+            message += f"The todo list is:\n{todo_table}"
+        
+        if message == "":
+            return
 
         self.data_manager.append_chat_message(
             {
                 "role": "system",
-                "content": f"The last 7 days and next 14 days worth of events are:\n{events_table}",
+                "content": message,
             }
         )
 
