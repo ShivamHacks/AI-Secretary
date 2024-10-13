@@ -234,6 +234,7 @@ class CachedGoogleCalendar:
                 )
 
                 # Update the cache with the real Google Calendar event ID
+                # TODO: make this into a map
                 for event in self.cache:
                     if event["id"] == event_data["id"]:  # Match the temp ID
                         event["id"] = created_event["id"]  # Replace with real ID
@@ -251,6 +252,7 @@ class CachedGoogleCalendar:
                 self.service.events().update(
                     calendarId="primary", eventId=event_id, body=updated_data
                 ).execute()
+
             elif operation[0] == "delete":
                 event_id = operation[1]
                 self.service.events().delete(

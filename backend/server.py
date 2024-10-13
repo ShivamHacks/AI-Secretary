@@ -45,6 +45,7 @@ class ConnectionManager:
 
         # After the stream, upload all new data to cloud, pull updates from calendar, and send final data
         chat.data_manager.apply_cloud_updates()
+        chat.google_calendar.sync_with_google_calendar()
         chat.load_calendar()
         await connection.send_text(
             json.dumps(
