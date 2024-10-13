@@ -32,7 +32,7 @@ class ConnectionManager:
 
         await self.active_connections[user_id].send_text(
             json.dumps(
-                {"type": "final", "data": chat.get_data()}
+                {"type": "final", "data": chat.get_data()}, cls=utils.DateTimeEncoder
             )
         )
 
@@ -48,7 +48,7 @@ class ConnectionManager:
         chat.load_calendar()
         await connection.send_text(
             json.dumps(
-                {"type": "final", "data": chat.get_data()}
+                {"type": "final", "data": chat.get_data()}, cls=utils.DateTimeEncoder
             )
         )
 

@@ -90,13 +90,21 @@ class CachedGoogleCalendar:
                     .execute()
                 )
                 for event in events["items"]:
-                    event_entry = {"id": event["id"]}
+                    event_entry = {
+                        "id": event["id"],
+                        "start": {
+                            "timeZone": "America/Los_Angeles",
+                        },
+                        "end": {
+                            "timeZone": "America/Los_Angeles",
+                        },
+                    }
                     if "start" in event and "dateTime" in event["start"]:
-                        event_entry["start"] = utils.date_from_string(
+                        event_entry["start"]["dateTime"] = utils.date_from_string(
                             utils.from_rfc3339(event["start"]["dateTime"])
                         )
                     if "end" in event and "dateTime" in event["end"]:
-                        event_entry["end"] = utils.date_from_string(
+                        event_entry["end"]["dateTime"] = utils.date_from_string(
                             utils.from_rfc3339(event["end"]["dateTime"])
                         )
                     if "summary" in event:
@@ -111,7 +119,6 @@ class CachedGoogleCalendar:
                 return {"success": False, "error": error}
 
         self.cache = events_list  # Update local cache
-        return {"success": True, "events": events_list}
 
     def read_events(self, start_date_time=None, end_date_time=None):
         """
@@ -124,6 +131,8 @@ class CachedGoogleCalendar:
         end_date_time = utils.date_from_string(end_date_time) if end_date_time else None
         filtered_events = []
         for event in self.cache:
+            if "start" not in event or "dateTime" not in event["start"] or "end" not in event or "dateTime" not in event["end"]:
+                continue
             event_start = event["start"]["dateTime"]
             event_end = event["end"]["dateTime"]
 

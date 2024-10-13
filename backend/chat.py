@@ -50,10 +50,8 @@ class Chat:
         self.google_calendar.set_access_token(access_token)
 
     def load_calendar(self):
-        events_response = self.google_calendar.read_events()
-        if events_response["success"]:
-            self.data_manager._update_local("events", events_response["events"])
-        return
+        self.google_calendar.read_events_to_cache()
+        self.data_manager._update_local("events", self.google_calendar.cache)
 
     def update_time_in_conversation(self):
         """

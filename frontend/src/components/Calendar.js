@@ -55,8 +55,8 @@ function Calendar() {
   const timeSlots = getTimeSlots();
 
   const calculateEventPosition = (event) => {
-    const eventStartTime = new Date(event.start);
-    const eventEndTime = new Date(event.end);
+    const eventStartTime = new Date(event.start.dateTime);
+    const eventEndTime = new Date(event.end.dateTime);
 
     // Get the day index (0-6, starting with Sunday)
     const startDayIndex = eventStartTime.getDay();
@@ -194,7 +194,7 @@ function Calendar() {
                   {/* Render Events */}
                   {data.events
                     .filter(event => {
-                      const eventStartTime = new Date(event.start);
+                      const eventStartTime = new Date(event.start.dateTime);
                       return eventStartTime.toLocaleDateString('en-US', date_format) === day;
                     })
                     .map((event, index) => {
