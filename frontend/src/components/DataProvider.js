@@ -11,7 +11,7 @@ function createWebSocketUrl(user_data, access_token) {
   if (isLocalhost) {
     return `ws://localhost:8000/ws/${user_data}/${access_token}`;
   } else {
-    return `ws://ec2-3-141-106-24.us-east-2.compute.amazonaws.com:8000/ws/${user_data}/${access_token}`;
+    return `wss://managemytimeai.com/ws/${user_data}/${access_token}`;
   }
 }
 
