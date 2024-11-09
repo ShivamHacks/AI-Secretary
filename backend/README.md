@@ -29,6 +29,8 @@ user, so it's possible the user's state is "ahead" of the remote database.
 This is an important preformance optimization, otherwise if we waited to send
 the user the updated state until all of the remote database updates finished,
 it would take a long time (imagine a chat message that creates 100 events).
+This also lets the chat be used offline, without requiring access to the remote
+database or google calendar.
 
 ## Automated Tests
 
