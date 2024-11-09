@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
+import { useDataContext } from "./DataProvider";
 
 // TODO: this could be a generic floating menu component
 const SettingsMenu = ({ isOpen, setIsOpen }) => {
+  const { isLocalhost, setIsLocalhost } = useDataContext();
 
   const close = () => {
     setIsOpen(false);
@@ -73,10 +75,15 @@ const SettingsMenu = ({ isOpen, setIsOpen }) => {
           ✕
         </button>
         <div>Settings Menu</div>
-        <ul style={{ listStyle: 'none', padding: 0, margin: '10px 0' }}>
-          <li style={{ padding: '5px 0' }}>Setting 1</li>
-          <li style={{ padding: '5px 0' }}>Setting 2</li>
-          <li style={{ padding: '5px 0' }}>Setting 3</li>
+        <ul>
+          <li>
+            <span>Use localhost for server: </span>
+              <input
+                type="checkbox"
+                checked={isLocalhost}
+                onChange={(e) => setIsLocalhost(e.target.checked)}
+              />
+          </li>
         </ul>
       </div>
     </div>

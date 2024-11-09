@@ -6,51 +6,51 @@ const DataContext = createContext();
 const SAMPLE_LOCAL_DATA = require('./local_data_example.json');
 const USE_LOCAL_DATA = false;
 
-function createWebSocketUrl(user_data, access_token) {
-  const isLocalhost = window.location.hostname === "localhost";
-  if (isLocalhost) {
-    return `ws://localhost:8000/ws/${user_data}/${access_token}`;
-  } else {
-    return `wss://managemytimeai.com/ws/${user_data}/${access_token}`;
-  }
-}
-
-function getBaseUrl() {
-  const isLocalhost = window.location.hostname === "localhost";
-  return isLocalhost ? "http://localhost:8000" : "https://managemytimeai.com";
-}
-
-
-function logCreateMessageEvent(userId) {
-  const cujId = Math.random().toString(36).substring(2, 15);
-  fetch(`${getBaseUrl()}/analytics`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      cuj_id: cujId,
-      event_type: 'message_sent_from_frontend',
-      timestamp: new Date().toISOString(),
-      user_id: userId,
-    })
-  });
-  return cujId;
-}
-
 export const DataProvider = ({ children }) => {
   const [userInfo, setUserInfo] = useState(null);
   const [data, setData] = useState({ chat: [], events: [], todo: [] });
-  const [multiUserData, setUserData] = useState({});
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
+
+  const isWindowLocalhost = window.location.hostname === "localhost";
+  const [isLocalhost, setIsLocalhost] = useState(isWindowLocalhost);
+
+  const getWebSocketUrl = (user_data, access_token) => {
+    if (isLocalhost) {
+      return `ws://localhost:8000/ws/${user_data}/${access_token}`;
+    } else {
+      return `wss://managemytimeai.com/ws/${user_data}/${access_token}`;
+    }
+  };
+
+  const getBaseUrl = () => {
+    return isLocalhost ? "http://localhost:8000" : "https://managemytimeai.com";
+  };
+
+  const logCreateMessageEvent = (userId) => {
+    const cujId = Math.random().toString(36).substring(2, 15);
+    fetch(`${getBaseUrl()}/analytics`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        cuj_id: cujId,
+        event_type: 'message_sent_from_frontend',
+        timestamp: new Date().toISOString(),
+        user_id: userId,
+      })
+    });
+    return cujId;
+  }
 
   const connectToSocket = () => {
     if (!userInfo) {
       console.log("User is not logged in");
       return false;
     }
-    socketRef.current = new WebSocket(createWebSocketUrl(userInfo.email, userInfo.accessToken));
+    console.log("Connecting to WebSocket, isLocalhost:", isLocalhost);
+    socketRef.current = new WebSocket(getWebSocketUrl(userInfo.email, userInfo.accessToken));
     return true;
   };
 
@@ -109,18 +109,14 @@ export const DataProvider = ({ children }) => {
       socketRef.current.onclose = () => {
         console.log("WebSocket connection closed");
         setIsConnected(false);
-        setTimeout(() => {
-          console.log("Retrying WebSocket connection...");
-          connectToSocket();
-        }, 2000);
       };
 
       return () => {
-        console.log("User changed, closing websocket");
+        console.log("State changed, closing websocket");
         socketRef.current.close();
       };
     }
-  }, [userInfo]);
+  }, [userInfo, isLocalhost]);
 
   const addMessage = (message) => {
     setData((prevData) => {
@@ -170,7 +166,16 @@ export const DataProvider = ({ children }) => {
 
   // Provide the state and functions to children components
   return (
-    <DataContext.Provider value={{ data, addMessage, userInfo, setUserInfo, logout, sendFeedback }}>
+    <DataContext.Provider value={{
+      data,
+      addMessage,
+      userInfo,
+      setUserInfo,
+      logout,
+      sendFeedback,
+      isLocalhost,
+      setIsLocalhost,
+    }}>
       {children}
     </DataContext.Provider>
   );
