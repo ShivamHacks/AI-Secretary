@@ -6,5 +6,5 @@ cd backend
 pkill -f uvicorn
 source .venv/bin/activate
 pip install -r requirements.txt
-./run.sh
+./scripts/run-cloud.sh
 EOF
