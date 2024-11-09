@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import { useDataContext } from "./DataProvider";
 import './component_styles.css';
+import { IoSettingsSharp } from "react-icons/io5";
+import SettingsMenu from './SettingsMenu';
+
 
 const Header = () => {
   const { logout, sendFeedback } = useDataContext();
   const [feedback, setFeedback] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
@@ -33,6 +37,9 @@ const Header = () => {
       }}>
         AI Secretary
       </h1>
+      <button onClick={() => setShowSettings(!showSettings)}>
+        <IoSettingsSharp size={15} />
+      </button>
       <input
         type="text"
         value={feedback}
@@ -42,6 +49,9 @@ const Header = () => {
       />
       <button onClick={handleSendFeedback} style={{ marginRight: '10px' }}>Send</button>
       <button onClick={logout}>Logout</button>
+
+      {/* Settings Menu, floats above other elements */}
+      <SettingsMenu isOpen={showSettings} setIsOpen={setShowSettings} />
     </div>
   );
 };
