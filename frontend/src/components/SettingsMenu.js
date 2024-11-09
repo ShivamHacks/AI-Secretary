@@ -1,15 +1,15 @@
 import React, { useEffect } from 'react';
 
+// TODO: this could be a generic floating menu component
 const SettingsMenu = ({ isOpen, setIsOpen }) => {
 
   const close = () => {
-    isOpen = false;
+    setIsOpen(false);
   };
 
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
-        console.log("Escape key pressed");
         setIsOpen(false);
       }
     };
@@ -22,7 +22,7 @@ const SettingsMenu = ({ isOpen, setIsOpen }) => {
       document.removeEventListener('keydown', handleEscape);
     };
 
-  }, []);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -34,14 +34,21 @@ const SettingsMenu = ({ isOpen, setIsOpen }) => {
       right: 0,
       bottom: 0,
       backgroundColor: 'rgba(0,0,0,0.3)', // Semi-transparent black scrim
-      display: 'flex',
-      alignItems: 'flex-start', // Align to top
-      justifyContent: 'flex-end', // Align to right
       paddingTop: '10%', // Push menu down by 10%
-      paddingRight: '60px',
       zIndex: 1000,
+      display: 'flex',
+      justifyContent: 'center',
     }}>
-      <div style={{ position: 'relative' }}>
+      <div style={{
+        position: 'relative',
+        width: '50%',
+        height: 'fit-content',
+        maxHeight: '80%', // Prevent from getting too tall
+        overflowY: 'auto', // Allow scrolling if content is very tall
+        backgroundColor: 'white',
+        borderRadius: '10px',
+        padding: '20px',
+      }}>
         <button
           onClick={close}
           style={{
@@ -51,7 +58,8 @@ const SettingsMenu = ({ isOpen, setIsOpen }) => {
             padding: '5px 10px',
             background: 'none',
             border: 'none',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            color: 'black',
           }}
         >
           ✕
