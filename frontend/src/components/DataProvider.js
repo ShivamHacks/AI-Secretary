@@ -15,6 +15,29 @@ function createWebSocketUrl(user_data, access_token) {
   }
 }
 
+function getBaseUrl() {
+  const isLocalhost = window.location.hostname === "localhost";
+  return isLocalhost ? "http://localhost:8000" : "https://managemytimeai.com";
+}
+
+
+function logCreateMessageEvent(userId) {
+  const cujId = Math.random().toString(36).substring(2, 15);
+  fetch(`${getBaseUrl()}/analytics`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      cuj_id: cujId,
+      event_type: 'message_sent_from_frontend',
+      timestamp: new Date().toISOString(),
+      user_id: userId,
+    })
+  });
+  return cujId;
+}
+
 export const DataProvider = ({ children }) => {
   const [userInfo, setUserInfo] = useState(null);
   const [data, setData] = useState({ chat: [], events: [], todo: [] });
@@ -100,16 +123,22 @@ export const DataProvider = ({ children }) => {
   }, [userInfo]);
 
   const addMessage = (message) => {
-    const newMessage = { role: "user", content: message };
     setData((prevData) => {
       // Add user message and empty assistant response
-      let updatedChat = [...prevData.chat, newMessage, {
+      let updatedChat = [...prevData.chat, {
+        role: "user",
+        content: message,
+      }, {
         role: "assistant",
         content: "",
       }];
       // Send the message to the server if connected
       if (socketRef.current && isConnected) {
-        const messagePayload = JSON.stringify({ newMessage: message });
+        const cujID = logCreateMessageEvent(userInfo.email);
+        const messagePayload = JSON.stringify({
+          newMessage: message,
+          cujID: cujID,
+        });
         console.log("Sending message to server:", messagePayload);
         socketRef.current.send(messagePayload);
       } else {

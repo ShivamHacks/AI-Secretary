@@ -1,4 +1,6 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from typing import Dict
 import json
 from datetime import datetime
@@ -8,6 +10,27 @@ from tools import utils
 app = FastAPI()
 start_time = datetime.now()
 
+# Add CORS middleware configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "https://time-ai.vercel.app",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+class AnalyticsEvent(BaseModel):
+    cuj_id: str
+    event_type: str
+    timestamp: str
+    user_id: str
+
+class MessageEvent(BaseModel):
+    cuj_id: str
+    newMessage: str
 
 class ConnectionManager:
     def __init__(self):
@@ -77,8 +100,14 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, access_token: s
             try:
                 received_message = json.loads(data)
 
-                # TODO: make this follow a proto or some object so parsing messages is cleaner
                 if "newMessage" in received_message:
+                    print(f"Received message: {received_message}")
+                    manager.user_data[user_id].data_manager.db_manager.store_analytics({
+                        "cuj_id": received_message["cujID"],
+                        "event_type": "message_received_on_backend",
+                        "timestamp": str(datetime.now()),
+                        "user_id": user_id
+                    })
                     new_message = received_message["newMessage"]
                     await manager.handle_message(user_id, new_message)
 
@@ -95,3 +124,15 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, access_token: s
 @app.get("/")
 def root():
     return f"Server up since {start_time.strftime(utils.DATE_STRING_FMT)}"
+
+
+@app.post("/analytics")
+async def log_analytics(event: AnalyticsEvent):
+    print(f"Received analytics event: {event}")
+    """Log analytics events with timestamps to Firebase"""
+    try:
+        manager.user_data[event.user_id].data_manager.db_manager.store_analytics(event)
+        return {"status": "success"}
+
+    except Exception as e:
+        return {"status": "error", "message": str(e)}

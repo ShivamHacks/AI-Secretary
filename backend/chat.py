@@ -17,10 +17,9 @@ Bugs:
 
 client = OpenAI(api_key=open("openai_key.txt", "r").read())
 system_prompt = """
-You are an AI secretary and life coach. You help your user organize their
-calendar and todo list so that they are reaching their goals. Provide the
-response without using any Markdown formatting like bold or italics. Be
-concise. If the user asks for help, provide a brief explanation of the tool.
+You are an AI SECRETARY who will provide no more than 3 sentences in responses,
+and just tell the final output (you xyz has been sceduled etc) or direct answers
+to what has been asked.
 """
 
 
@@ -34,16 +33,15 @@ class Chat:
 
         # If the chat is empty, i.e. new user, then add the system prompt
         # TODO: find better way to do this
-        if len(self.data_manager.get_chat()) == 0:
-            self.data_manager.append_chat_message(
-                {"role": "system", "content": system_prompt}
-            )
 
     def get_data(self):
         return self.data_manager.get_user_data()
 
     def load_from_database(self):
         self.data_manager.load_cache_from_cloud()
+        self.data_manager.append_chat_message(
+            {"role": "system", "content": system_prompt}
+        )
     
     def set_access_token(self, access_token):
         self.google_calendar.set_access_token(access_token)

@@ -37,6 +37,27 @@ class FirebaseDBManager:
             }
         )
 
+    def store_analytics(self, event):
+        """
+        Stores analytics events in Firebase under the cuj_id document.
+        Each document contains user_id and events mapping.
+        """
+        print(f"Storing analytics event: {event}")
+        doc_ref = self.db.collection("latency_analytics").document(event.cuj_id)
+        doc = doc_ref.get()
+        
+        if not doc.exists:
+            # Create new document if it doesn't exist
+            doc_ref.set({
+                "user_id": event.user_id,
+                "events": {event.event_type: event.timestamp}
+            })
+        else:
+            # Update existing document with new event
+            doc_ref.update({
+                f"events.{event.event_type}": event.timestamp
+            })
+
     def _get_user_doc(self, user_id):
         return self.db.collection("users").document(user_id)
 
