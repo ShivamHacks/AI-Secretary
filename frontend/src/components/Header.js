@@ -37,7 +37,9 @@ const Header = () => {
       }}>
         AI Secretary
       </h1>
-      <button onClick={() => setShowSettings(!showSettings)}>
+      <button
+        style={{ marginRight: '10px' }}
+        onClick={() => setShowSettings(!showSettings)}>
         <IoSettingsSharp size={15} />
       </button>
       <input
