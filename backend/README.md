@@ -1,44 +1,29 @@
-# Running
+# First Time Setup
 
-App: `python app.py`
-Server: `uvicorn server:app --reload`
+1. Make all scripts executable: `chmod +x scripts/*.sh`
+2. Set up virtual env: `python3 -m venv .venv`
 
-Tests:
-* `python -m tools.google_calendar_test`
-* `python -m unittest chat_tests.TestAISecretaryReal.test_create_task`
+Now, everytime you want to work on the project, run:
 
-Architectural changes to make
-- use objects everywhere, e.g. Chat instance has chat, events, todo. Then Event has id, start, etc. Also same for communicating between server and frontend. Start is a datetime.
-  then these objects can have the necessary conversions from string and all. Right now I'm running into dict key missing
-  errors, JSON serialization to give to GPT, and difficult to refactor fields.
-- topical logging. E.g. event CRUD, DB CRUD, ...
-- better error logging in a privacy safe way
+`./scripts/setup-workspace.sh`
 
-Smaller refactorings
-- calendar cache should use database cache? same for todo list
+This will put you in a virtual environment. Anytime you sync from the remote repository, this command will also update the dependencies.
 
-Latency
-- anytime the local cache changes, push to client so it feels snappy
+When you want to exit the virtual environment, run `deactivate`.
 
-UX
-- add messaging dots so users know message was received
+Anytime you want to work on the project, run `source .venv/bin/activate`.
 
-Refresh server
+# Running Server
 
-1. `ssh ec2-user@ec2-3-141-106-24.us-east-2.compute.amazonaws.com`
-2. `cd AI-Secretary`
-3. `git pull origin main`
-4. `cd backend `
-5. `source .venv/bin/activate`
-6. `pip install -r requirements.txt`
-7. `./run.sh`
+`./scripts/run-local.sh`
 
-To send any local credential files:
+# Miscellaneous Notes
 
+To send any local credential files (no longer needed):
 `scp <file> ec2-user@ec2-3-141-106-24.us-east-2.compute.amazonaws.com:<path>`
 
+## Setting up HTTPS (already done)
 
-To set up HTTPS here's what I had to do:
 1. Get a public domain (used AWS Route53) (took 10 minutes for domain to register)
 2. Link public domain to ec2 http address via Route53 hosted zone - create an A record
 3. Use the setup-https script to setup https
